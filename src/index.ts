@@ -42,9 +42,25 @@ async function bump(kv: KVNamespace, key: string): Promise<void> {
 	await kv.put(key, String(n + 1));
 }
 
-/** Render + cache the share image for a permalink. Silent on failure: the generic card stands in. */
+/**
+ * Render + cache the share image for a permalink. Silent on failure: the generic
+ * card stands in.
+ *
+ * Two bounds, because Browser Rendering is the scarcest resource here and a
+ * shared link is exactly the thing that arrives as a burst. A per-id lock stops
+ * N simultaneous viewers of one link each starting their own render, and a daily
+ * budget stops the whole feature from exhausting the account's minutes. Both
+ * degrade to the generic card, never to an error.
+ */
 async function prerenderOg(env: AppEnv, id: string, org: Org): Promise<Uint8Array | null> {
 	if (!env.BROWSER) return null;
+	const lockKey = `oglock:${id}`;
+	if (await env.KV.get(lockKey)) return null; // a render for this id is already in flight
+	const budget = await consumeDailyCap(env.KV, new Date(), Number(env.OG_DAILY_CAP) || 0, 'ogcap');
+	if (!budget.allowed) return null;
+	// Held, not released on success: once the PNG is cached no re-render is wanted,
+	// and if the render failed this throttles retries instead of hammering.
+	await env.KV.put(lockKey, '1', { expirationTtl: 120 });
 	try {
 		const png = await renderOgPng(env.BROWSER, ogCardHtml(org));
 		await env.KV.put(`og:${id}`, png, { expirationTtl: PERMALINK_TTL });
@@ -96,12 +112,16 @@ app.use('*', async (c, next) => {
 });
 
 app.get('/api/config', (c) =>
-	c.json({
-		turnstileSiteKey: c.env.TURNSTILE_SITE_KEY || null,
-		contactEmail: c.env.CONTACT_EMAIL,
-		dailyCap: Number(c.env.STAFF_DAILY_CAP) || 0,
-		repos: repoList(c.env).map((r) => `https://github.com/${c.env.GITHUB_OWNER}/${r}`),
-	}),
+	c.json(
+		{
+			turnstileSiteKey: c.env.TURNSTILE_SITE_KEY || null,
+			contactEmail: c.env.CONTACT_EMAIL,
+			dailyCap: Number(c.env.STAFF_DAILY_CAP) || 0,
+			repos: repoList(c.env).map((r) => `https://github.com/${c.env.GITHUB_OWNER}/${r}`),
+		},
+		200,
+		{ 'cache-control': 'public, max-age=300' },
+	),
 );
 
 app.get('/api/stats', async (c) => {

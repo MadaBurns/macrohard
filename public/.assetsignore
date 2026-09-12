@@ -1,0 +1,9 @@
+# Never publish build artefacts. Vitest's dependency optimiser writes its cache
+# into ./node_modules relative to the project it loads, which lands here and was
+# being served publicly (200 on macrohard.nz/node_modules/...). Content was
+# harmless, but it reappears on every test run, so exclude it at the source of
+# truth rather than remembering to delete it.
+node_modules
+.vite
+.DS_Store
+*.map

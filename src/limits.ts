@@ -4,8 +4,8 @@
  *  - a per-query result cache so repeat prompts cost nothing
  */
 
-export function dayKey(now: Date): string {
-	return `cap:${now.toISOString().slice(0, 10)}`;
+export function dayKey(now: Date, prefix = 'cap'): string {
+	return `${prefix}:${now.toISOString().slice(0, 10)}`;
 }
 
 export interface CapResult {
@@ -19,8 +19,8 @@ export interface CapResult {
  * overshoot by a handful — acceptable for a ceiling whose purpose is "not
  * unbounded", not "exactly N".
  */
-export async function consumeDailyCap(kv: KVNamespace, now: Date, cap: number): Promise<CapResult> {
-	const key = dayKey(now);
+export async function consumeDailyCap(kv: KVNamespace, now: Date, cap: number, prefix = 'cap'): Promise<CapResult> {
+	const key = dayKey(now, prefix);
 	const used = Number((await kv.get(key)) ?? '0') || 0;
 	if (used >= cap) return { allowed: false, used, cap };
 	await kv.put(key, String(used + 1), { expirationTtl: 2 * 86_400 });

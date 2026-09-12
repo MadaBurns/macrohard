@@ -22,6 +22,7 @@ export interface AppEnv {
 	GITHUB_REPOS: string;
 	RECEIPTS_WINDOW_DAYS: string;
 	STAFF_DAILY_CAP: string;
+	OG_DAILY_CAP: string;
 	AI_MODEL: string;
 	CONTACT_EMAIL: string;
 	TURNSTILE_SITE_KEY: string;

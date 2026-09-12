@@ -13,9 +13,20 @@
 
 	// Static site. Assets are served by the platform before the Worker runs
 	// for any path that matches a file; everything else falls through to src/index.ts.
-	// run_worker_first so the www→apex redirect applies to asset paths too; the
-	// Worker's catch-all hands everything else to the assets binding.
-	"assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+	// Only these paths invoke the Worker. Requests to static assets are free and
+	// unlimited; routing every one through the Worker (run_worker_first: true)
+	// cost ~7 invocations per page view, which on the Free plan's 100k/day put the
+	// ceiling around 14k views — well under what a front-page spike delivers.
+	//   "/" and "/method"  → the www→apex redirect for anything a human navigates to
+	//   "/api/*", "/s/*"   → the API and personalised permalinks
+	//   "/og/*"            → per-permalink share images ("/og.png" stays a static asset)
+	// Unmatched paths with no asset still reach the Worker's catch-all, so the 404
+	// page keeps its 404 status.
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"run_worker_first": ["/", "/method", "/api/*", "/s/*", "/og/*"],
+	},
 
 	"kv_namespaces": [{ "binding": "KV", "id": "6316a73ae2504d40818759e3294d4ecf" }],
 
@@ -38,6 +49,7 @@
 		"GITHUB_REPOS": "bv-mcp,blackveil-dns-action,bv-claude-dns,macrohard",
 		"RECEIPTS_WINDOW_DAYS": "90",
 		"STAFF_DAILY_CAP": "400",
+		"OG_DAILY_CAP": "60",
 		"AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
 		"CONTACT_EMAIL": "hello@macrohard.nz",
 		"TURNSTILE_SITE_KEY": "",

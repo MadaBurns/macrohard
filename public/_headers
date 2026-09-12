@@ -1,5 +1,9 @@
 /*
   X-Content-Type-Options: nosniff
+  # Both hostnames are Cloudflare custom domains, so they are HTTPS-only already.
+  # No `preload` deliberately: the preload list is slow to leave, and nothing here
+  # needs it. A browser that has seen this header will refuse plaintext for a year.
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Content-Security-Policy: default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; frame-src https://challenges.cloudflare.com; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data:; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
