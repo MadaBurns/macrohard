@@ -13,6 +13,10 @@ set -u
 BASE="${BASE:-https://macrohard.nz}"
 NS="${NS:-6316a73ae2504d40818759e3294d4ecf}"
 CWD="$(cd "$(dirname "$0")/.." && pwd)"
+# Private scratch dir, not fixed /tmp names: a predictable path in a world-writable
+# directory lets a pre-created symlink redirect these writes, and the log sample can
+# contain request data.
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 TAIL_SECS=0
 LOOP=0
 while [ $# -gt 0 ]; do
@@ -59,10 +63,10 @@ snapshot() {
 	# --- receipts freshness -------------------------------------------------
 	echo
 	echo "receipts (the numbers on the page)"
-	curl -sS --max-time 20 "$BASE/api/receipts" -o /tmp/mh_watch_receipts.json 2>/dev/null
-	python3 - <<'PY' 2>/dev/null || bad "receipts" "could not read /api/receipts"
-import json, datetime, sys
-d = json.load(open('/tmp/mh_watch_receipts.json'))
+	curl -sS --max-time 20 "$BASE/api/receipts" -o "$TMP/receipts.json" 2>/dev/null
+	MH_RECEIPTS="$TMP/receipts.json" python3 - <<'PY' 2>/dev/null || bad "receipts" "could not read /api/receipts"
+import json, datetime, sys, os
+d = json.load(open(os.environ['MH_RECEIPTS']))
 if d.get('status') != 'ok':
     print('\033[33m  %-22s\033[0m %s' % ('receipts', 'status=%s (warming)' % d.get('status'))); sys.exit(0)
 gen = datetime.datetime.fromisoformat(d['generatedAt'].replace('Z', '+00:00'))
@@ -112,7 +116,7 @@ print(json.loads(s)['vars']['OG_DAILY_CAP'])" 2>/dev/null || echo 0)
 sample_tail() {
 	echo "log sample — ${TAIL_SECS}s (errors and exceptions only)"
 	dim "a quiet sample is not proof of health; it only means nothing failed in this window"
-	local out=/tmp/mh_watch_tail.json
+	local out="$TMP/tail.json"
 	: > "$out"
 	npx --no-install wrangler tail macrohard --format json --cwd "$CWD" > "$out" 2>/dev/null &
 	local pid=$!
