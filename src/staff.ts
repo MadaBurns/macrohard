@@ -247,16 +247,37 @@ export const GUARD_MODEL = '@cf/meta/llama-guard-3-8b';
 
 export type Verdict = 'safe' | 'unsafe' | 'unknown';
 
-/** Llama Guard answers with "safe" or "unsafe\n<categories>" as text. */
+/**
+ * Llama Guard 3 categories that matter for a public, permalinked toy. The
+ * rest are ignored on purpose: S7 (privacy) fires on any long run of digits —
+ * "a ferry operator with 041338 staff" — and S2/S6/S8/S13/S14 (non-violent
+ * crime, specialised advice, IP, elections, code abuse) are not the abuse
+ * vector here, which is screenshot-able hate, violence or sexual content
+ * under the site's framing.
+ */
+export const BLOCKED_CATEGORIES = new Set(['S1', 'S3', 'S4', 'S5', 'S9', 'S10', 'S11', 'S12']);
+
+/** Llama Guard answers with "safe" or "unsafe\n<comma-separated categories>" as text. */
 export function parseGuard(result: unknown): Verdict {
 	const text =
 		result && typeof result === 'object' && 'response' in result
 			? String((result as { response: unknown }).response)
 			: String(result ?? '');
-	const t = text.trim().toLowerCase();
-	if (t.startsWith('safe')) return 'safe';
-	if (t.startsWith('unsafe')) return 'unsafe';
-	return 'unknown';
+	const lines = text
+		.trim()
+		.split('\n')
+		.map((l) => l.trim())
+		.filter(Boolean);
+	const head = (lines[0] ?? '').toLowerCase();
+	if (head.startsWith('safe')) return 'safe';
+	if (!head.startsWith('unsafe')) return 'unknown';
+	const cats = (lines[1] ?? '')
+		.toUpperCase()
+		.split(/[,\s]+/)
+		.filter(Boolean);
+	// "unsafe" with no category is treated as unsafe — the conservative reading.
+	if (cats.length === 0) return 'unsafe';
+	return cats.some((c) => BLOCKED_CATEGORIES.has(c)) ? 'unsafe' : 'safe';
 }
 
 export async function moderateQuery(ai: AiLike, query: string): Promise<Verdict> {
