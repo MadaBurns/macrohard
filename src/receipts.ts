@@ -173,12 +173,15 @@ export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
 
 const MAX_PAGES = 10;
 
-function nextLink(res: Response): string | null {
+const GITHUB_API = 'https://api.github.com/';
+
+/** The `next` page from a Link header — only if it stays on the GitHub API host. */
+export function nextLink(res: Response): string | null {
 	const link = res.headers.get('link');
 	if (!link) return null;
 	for (const part of link.split(',')) {
 		const m = part.match(/<([^>]+)>;\s*rel="next"/);
-		if (m) return m[1];
+		if (m && m[1].startsWith(GITHUB_API)) return m[1];
 	}
 	return null;
 }

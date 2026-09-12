@@ -35,6 +35,10 @@ Nothing is inferred from author names. See `parseAgentTrailers` in
    served and labelled as such. Set it to `0` to switch the model off entirely.
 4. Optional Turnstile: set `TURNSTILE_SITE_KEY` (var) and `TURNSTILE_SECRET`
    (secret) and the form starts requiring a token.
+5. Llama Guard 3 on the query before generation (unsafe → 400, nothing
+   stored) and on the generated org after it (unsafe → canned fallback).
+   When the daily cap is spent, the visitor's text is not stored at all.
+   Nothing reaches a public permalink unmoderated.
 
 ### Optional secrets
 

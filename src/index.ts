@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { AppEnv } from './env';
 import { getReceipts, isStale, refreshReceipts, type Receipts } from './receipts';
-import { FALLBACK_ORGS, cacheKeyText, generateOrg, pickFallback, validateQuery, type Org } from './staff';
+import { FALLBACK_ORGS, cacheKeyText, generateOrg, moderateOrg, moderateQuery, pickFallback, validateQuery, type Org } from './staff';
 import { ID_RE, consumeDailyCap, newId, sha256Hex, verifyTurnstile } from './limits';
 
 type Bindings = AppEnv;
@@ -103,12 +103,18 @@ app.post('/api/staff', async (c) => {
 
 	let org: Org;
 	let mode: StoredOrg['mode'] = 'ai';
+	let storedQuery = query;
 	if (!cap.allowed) {
-		org = pickFallback(query);
+		// Budget spent: a standing proposal, and the visitor's text is not stored at all
+		// (nothing unmoderated may reach a permalink).
+		org = { ...FALLBACK_ORGS.generic };
 		mode = 'fallback';
+		storedQuery = '';
 	} else {
+		if ((await moderateQuery(c.env.AI, query)) === 'unsafe') return c.json({ error: 'Not that one.' }, 400);
 		try {
 			org = await generateOrg(c.env.AI, c.env.AI_MODEL, query);
+			if ((await moderateOrg(c.env.AI, query, org)) === 'unsafe') throw new Error('output flagged by guard');
 		} catch (err) {
 			console.error('generateOrg failed', String(err));
 			org = pickFallback(query);
@@ -117,7 +123,7 @@ app.post('/api/staff', async (c) => {
 	}
 
 	const id = newId();
-	const stored: StoredOrg = { id, query, org, mode, createdAt: now.toISOString() };
+	const stored: StoredOrg = { id, query: storedQuery, org, mode, createdAt: now.toISOString() };
 	await c.env.KV.put(`s:${id}`, JSON.stringify(stored), { expirationTtl: 180 * 86_400 });
 	// Only cache real generations; a fallback should get another go next time.
 	if (mode === 'ai') await c.env.KV.put(cacheKey, JSON.stringify(stored), { expirationTtl: 30 * 86_400 });

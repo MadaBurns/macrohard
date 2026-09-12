@@ -236,3 +236,54 @@ export async function generateOrg(ai: AiLike, model: string, query: string): Pro
 	const parsed = OrgSchema.parse(extractJson(raw));
 	return scrub(parsed);
 }
+
+// ---------------------------------------------------------------------------
+// Moderation — Llama Guard on the way in and on the way out. Anything stored
+// at a public permalink has passed both. A guard outage degrades to "unknown",
+// which the caller treats as pass: an outage should not take the toy down.
+// ---------------------------------------------------------------------------
+
+export const GUARD_MODEL = '@cf/meta/llama-guard-3-8b';
+
+export type Verdict = 'safe' | 'unsafe' | 'unknown';
+
+/** Llama Guard answers with "safe" or "unsafe\n<categories>" as text. */
+export function parseGuard(result: unknown): Verdict {
+	const text =
+		result && typeof result === 'object' && 'response' in result
+			? String((result as { response: unknown }).response)
+			: String(result ?? '');
+	const t = text.trim().toLowerCase();
+	if (t.startsWith('safe')) return 'safe';
+	if (t.startsWith('unsafe')) return 'unsafe';
+	return 'unknown';
+}
+
+export async function moderateQuery(ai: AiLike, query: string): Promise<Verdict> {
+	try {
+		return parseGuard(await ai.run(GUARD_MODEL, { messages: [{ role: 'user', content: query }] }));
+	} catch {
+		return 'unknown';
+	}
+}
+
+export function orgToText(org: Org): string {
+	const lines = [`${org.title}. ${org.agents} agents, USD ${org.runRateUsdPerDay} per day, cycle time ${org.cycleTime}.`];
+	for (const r of org.roles) lines.push(`${r.role}: ${r.tools}; ${r.tokensPerDay} tokens/day; stands in for ${r.standsInFor}.`);
+	return lines.join('\n');
+}
+
+export async function moderateOrg(ai: AiLike, query: string, org: Org): Promise<Verdict> {
+	try {
+		return parseGuard(
+			await ai.run(GUARD_MODEL, {
+				messages: [
+					{ role: 'user', content: query },
+					{ role: 'assistant', content: orgToText(org) },
+				],
+			}),
+		);
+	} catch {
+		return 'unknown';
+	}
+}

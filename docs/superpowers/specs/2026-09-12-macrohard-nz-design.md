@@ -88,6 +88,12 @@ cron */30               refresh receipts snapshot
 - Output validated with zod (3–7 roles, bounded numbers, bounded strings) and
   scrubbed of anything link- or email-shaped before storage or display.
 - Input: ≥3 chars, ≤200, no URLs, no `@`.
+- Moderation (added after the post-commit security pass): Llama Guard 3
+  (`@cf/meta/llama-guard-3-8b`, ~9 neurons/call) on the query before
+  generation — unsafe → 400 and nothing stored — and on the generated org
+  after — unsafe → canned fallback. A guard outage reads as "unknown" and
+  passes, so it cannot take the toy down. When the daily cap is spent the
+  visitor's text is not stored, so nothing unmoderated can reach a permalink.
 - Fallback: five canned orgs keyed by keyword; served when the model fails or
   the cap trips; response carries `mode:"fallback"` and the UI says so. Fallbacks
   are not cached, so the next attempt tries the model again.
