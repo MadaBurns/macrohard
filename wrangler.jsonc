@@ -18,7 +18,7 @@
 	// instead of ~2. On Workers Paid that is 10M included per month then $0.30/million,
 	// so this is no longer a cliff — but it is still 3.5× the request bill for nothing,
 	// and it was a hard ~14k/day ceiling on the Free plan this was first written for.
-	//   "/" and "/method"  → the www→apex redirect for anything a human navigates to
+	//   "/", "/method", "/operations" → the www→apex redirect for anything a human navigates to
 	//   "/api/*", "/s/*"   → the API and personalised permalinks
 	//   "/og/*"            → per-permalink share images ("/og.png" stays a static asset)
 	// Unmatched paths with no asset still reach the Worker's catch-all, so the 404
@@ -26,7 +26,7 @@
 	"assets": {
 		"directory": "./public",
 		"binding": "ASSETS",
-		"run_worker_first": ["/", "/method", "/api/*", "/s/*", "/og/*"],
+		"run_worker_first": ["/", "/method", "/operations", "/api/*", "/s/*", "/og/*"],
 	},
 
 	"kv_namespaces": [{ "binding": "KV", "id": "6316a73ae2504d40818759e3294d4ecf" }],

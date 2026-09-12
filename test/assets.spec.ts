@@ -126,6 +126,46 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(html).toContain('data-n="8.7"');
 	});
 
+	it('carries the live band, and the band never ships a figure the page has not fetched', async () => {
+		const html = flat(await (await SELF.fetch(`${ORIGIN}/`)).text());
+		expect(html).toContain('id="live"');
+		expect(html).toContain('id="live-dot"');
+		expect(html).toContain('id="live-facts"');
+		// Hidden until the first snapshot lands: an empty band is worse than none.
+		expect(html).toMatch(/<div class="live" id="live" hidden>/);
+		// The ceilings are configuration; hard-coding them into the markup is how they go stale.
+		expect(html).not.toContain(env.STAFF_DAILY_CAP);
+	});
+
+	it('carries Note 10 with the cycle diagram and a run strip of provable figures', async () => {
+		const html = flat(await (await SELF.fetch(`${ORIGIN}/`)).text());
+		expect(html).toContain('Note 10 — Operations');
+		expect(html).toContain('id="operations"');
+		expect(html).toContain('is one of the four it counts');
+		for (const hook of ['data-r="runAt"', 'data-r="runRepos"', 'data-r="runWindow"', 'data-r="runCommits"', 'data-r="runNext"']) {
+			expect(html).toContain(hook);
+		}
+		// Notes run in order; Note 10 comes after Note 9.
+		expect(html.indexOf('Note 9 — Subsequent events')).toBeLessThan(html.indexOf('Note 10 — Operations'));
+	});
+
+	it('serves /operations with all ten gates and no restated ceiling', async () => {
+		const res = await SELF.fetch(`${ORIGIN}/operations`);
+		expect(res.status).toBe(200);
+		const html = flat(await res.text());
+		expect(html).toContain('Ten gates');
+		for (const n of ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']) {
+			expect(html).toContain(`class="gate-n">${n}<`);
+		}
+		expect(html).toContain('Refuse');
+		expect(html).toContain('Degrade');
+		expect(html).toContain('Skip');
+		// Same rule as the band: the numbers live in config, not in prose.
+		expect(html).not.toContain(env.STAFF_DAILY_CAP);
+		expect(html).not.toContain(env.OG_DAILY_CAP);
+		expect(html).not.toContain('<script>');
+	});
+
 	it('generic share card is the headcount card and ships as a 1200x630 PNG', async () => {
 		const html = await (await SELF.fetch(`${ORIGIN}/og.html`)).text();
 		expect(html).toContain('Headcount, human');

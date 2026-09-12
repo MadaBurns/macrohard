@@ -8,6 +8,17 @@ export function dayKey(now: Date, prefix = 'cap'): string {
 	return `${prefix}:${now.toISOString().slice(0, 10)}`;
 }
 
+/**
+ * Set only when a guard pass could not answer, and short-lived on purpose: the
+ * band should report an outage while it is happening and forget it afterwards,
+ * not keep a permanent record of every second the guard was unreachable.
+ *
+ * It lives here rather than in the Worker entrypoint because workerd rejects a
+ * named export from the entry module that is not a handler.
+ */
+export const GUARD_OUTAGE_KEY = 'guard:outage';
+export const GUARD_OUTAGE_TTL = 300;
+
 export interface CapResult {
 	allowed: boolean;
 	used: number;
@@ -25,6 +36,16 @@ export async function consumeDailyCap(kv: KVNamespace, now: Date, cap: number, p
 	if (used >= cap) return { allowed: false, used, cap };
 	await kv.put(key, String(used + 1), { expirationTtl: 2 * 86_400 });
 	return { allowed: true, used: used + 1, cap };
+}
+
+/**
+ * The same counter, read only. Reporting the day's spend must never consume any
+ * of it — a band that closed the desk by looking at it would be a spend bound
+ * that bills for being displayed.
+ */
+export async function readDailyCap(kv: KVNamespace, now: Date, cap: number, prefix = 'cap'): Promise<CapResult> {
+	const used = Number((await kv.get(dayKey(now, prefix))) ?? '0') || 0;
+	return { allowed: used < cap, used, cap };
 }
 
 export async function sha256Hex(text: string): Promise<string> {

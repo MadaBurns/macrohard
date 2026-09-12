@@ -33,9 +33,51 @@
 	const fmtSmall = (n) => (n >= 0 && n < WORDS.length ? WORDS[n] : fmtInt(n));
 
 	// ---------------------------------------------------------------------
+	// Motion
+	//
+	// Nothing here loops for atmosphere: a figure moves only when the snapshot
+	// says it moved, and it wears its change marker until the next snapshot
+	// replaces or clears it. Reduced motion drops every animation to its end
+	// state — the values still change, because those are content.
+	// ---------------------------------------------------------------------
+	const still = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	function countTo(el, from, to, fmt, dp) {
+		const t0 = performance.now();
+		const step = (t) => {
+			const p = Math.min(1, (t - t0) / 700);
+			const v = from + (to - from) * (1 - Math.pow(1 - p, 3));
+			el.textContent = fmt(dp ? Math.round(v * 10) / 10 : Math.round(v));
+			if (p < 1) requestAnimationFrame(step);
+		};
+		requestAnimationFrame(step);
+	}
+
+	/** Set a figure; count to it when it moved, and say what it moved by. */
+	function setNum(name, value, fmt, dp) {
+		const el = r(name);
+		if (!el) return;
+		const had = el.dataset.v !== undefined;
+		const prev = had ? Number(el.dataset.v) : null;
+		el.dataset.v = String(value);
+		if (!had || prev === value || still()) el.textContent = fmt(value);
+		else countTo(el, prev, value, fmt, dp);
+
+		const chip = $(`[data-d="${name}"]`);
+		if (!chip) return;
+		const up = had && value > prev ? Math.round((value - prev) * 10) / 10 : 0;
+		chip.textContent = up ? `+${up}` : '';
+		chip.hidden = !up;
+	}
+
+	// ---------------------------------------------------------------------
 	// Receipts
 	// ---------------------------------------------------------------------
 	let warmTries = 0;
+	// Commits the page has shown, and the subset that landed while you watched.
+	const seenShas = new Set();
+	const freshShas = new Set();
+	let firstLedger = true;
 
 	async function loadReceipts() {
 		let res;
@@ -53,11 +95,12 @@
 	}
 
 	function renderReceipts(d) {
-		r('agentCommits').textContent = fmtInt(d.agentCommits);
-		r('prsMerged').textContent = fmtInt(d.prsMerged);
+		live.receipts = d;
+		setNum('agentCommits', d.agentCommits, fmtInt);
+		setNum('prsMerged', d.prsMerged, fmtInt);
 		r('medianPr').textContent = fmtHours(d.medianPrHours);
-		r('agentIdentities').textContent = fmtInt((d.agentIdentities || []).length);
-		r('agentShare').textContent = `${d.agentShare}%`;
+		setNum('agentIdentities', (d.agentIdentities || []).length, fmtInt);
+		setNum('agentShare', d.agentShare, (n) => `${n}%`, 1);
 		r('asof').textContent = d.generatedAt ? `As of ${fmtAgo(d.generatedAt)}.` : '';
 
 		const rows = $('#ledger-rows');
@@ -73,8 +116,22 @@
 			$('[data-f="repo"]', node).textContent = row.repo;
 			$('[data-f="agent"]', node).textContent = row.agent;
 			$('[data-f="when"]', node).textContent = fmtAgo(row.date);
+			// New means "since the snapshot this page opened on", not "since you
+			// reloaded" — otherwise every visit re-announces the same eight rows.
+			const arrived = !firstLedger && !seenShas.has(row.sha);
+			seenShas.add(row.sha);
+			if (arrived) freshShas.add(row.sha);
+			if (freshShas.has(row.sha)) {
+				node.classList.add('fresh');
+				$('[data-f="tag"]', node).hidden = false;
+			}
+			if (arrived) {
+				node.classList.add('tint', 'arriving');
+				setTimeout(() => node.classList.remove('tint'), 8000);
+			}
 			rows.appendChild(node);
 		}
+		firstLedger = false;
 		if (!(d.ledger || []).length) {
 			rows.innerHTML = '<div class="ledger-empty">No agent-authored commits in the window.</div>';
 		}
@@ -96,6 +153,110 @@
 		renderSegments(d);
 		renderSelf(d);
 		renderIdentities(d);
+		renderRun(d);
+		renderBand();
+		// A refresh is already in flight upstream; look again rather than wait for the minute.
+		if (d.stale) setTimeout(loadReceipts, 8000);
+	}
+
+	// ---------------------------------------------------------------------
+	// The band, and Note 10's run strip
+	//
+	// Only what the Worker actually knows. The age of the figures and the token
+	// state ride on the snapshot; the desk and the guard come from /api/live.
+	// The countdown is arithmetic on a */30 cron, not a promise.
+	// ---------------------------------------------------------------------
+	const live = { receipts: null, desk: null, guard: null };
+	const bandEl = $('#live');
+	const dotEl = $('#live-dot');
+	const labelEl = $('#live-label');
+	const factsEl = $('#live-facts');
+
+	const two = (n) => String(n).padStart(2, '0');
+
+	function nextRun(now = new Date()) {
+		const d = new Date(now);
+		d.setUTCSeconds(0, 0);
+		d.setUTCMinutes(d.getUTCMinutes() < 30 ? 30 : 60);
+		return d;
+	}
+
+	function countdown(to, now = Date.now()) {
+		const s = Math.max(0, Math.round((to - now) / 1000));
+		return `${two(Math.floor(s / 60))}:${two(s % 60)}`;
+	}
+
+	function fact(label, value, warn) {
+		const span = document.createElement('span');
+		if (warn) {
+			span.className = 'live-warn';
+			span.textContent = value;
+			return span;
+		}
+		span.append(`${label} `);
+		const b = document.createElement('b');
+		b.textContent = value;
+		span.append(b);
+		return span;
+	}
+
+	function renderRun(d) {
+		const at = Date.parse(d.generatedAt);
+		if (Number.isFinite(at)) r('runAt').textContent = `${new Date(at).toISOString().slice(11, 19)}Z`;
+		r('runRepos').textContent = fmtInt((d.repos || []).length);
+		r('runWindow').textContent = `${fmtInt(d.windowDays || 90)}d`;
+		r('runCommits').textContent = fmtInt(d.totalCommits);
+	}
+
+	function renderBand() {
+		const d = live.receipts;
+		if (!d || !bandEl) return;
+		const spent = live.desk && live.desk.cap > 0 && live.desk.used >= live.desk.cap;
+		const lapsed = d.tokenRejected === true;
+		const at = Date.parse(d.generatedAt);
+
+		const label = lapsed ? 'Running unauthenticated' : d.stale ? 'Reading GitHub' : 'Running';
+		if (labelEl.textContent !== label) labelEl.textContent = label;
+		// Only when it changes: reassigning restarts the pulse every tick.
+		const cls = `live-dot${lapsed ? ' lapsed' : spent ? ' hollow' : ' beat'}`;
+		if (dotEl.className !== cls) dotEl.className = cls;
+
+		const bits = [];
+		if (Number.isFinite(at)) bits.push(fact('Refreshed', `${new Date(at).toISOString().slice(11, 16)}Z`));
+		// A countdown the Worker cannot honour is a forecast, and the company issues none.
+		bits.push(lapsed ? fact('', `${fmtAgo(d.generatedAt).replace(' ago', '')} old`, true) : fact('Next in', countdown(nextRun())));
+		if (live.desk) {
+			bits.push(
+				spent ? fact('', 'Desk closed · reopens 00:00Z', true) : fact('Desk open', `${fmtInt(live.desk.used)}/${fmtInt(live.desk.cap)}`),
+			);
+		}
+		if (live.guard) bits.push(live.guard === 'degraded' ? fact('', 'Guard unreachable', true) : fact('Guard', 'ok'));
+
+		factsEl.replaceChildren();
+		bits.forEach((b, i) => {
+			if (i) {
+				const sep = document.createElement('span');
+				sep.className = 'live-sep';
+				sep.textContent = '/';
+				factsEl.append(sep);
+			}
+			factsEl.append(b);
+		});
+		bandEl.hidden = false;
+
+		if (r('runNext')) r('runNext').textContent = `in ${countdown(nextRun())}`;
+		if (r('cycleAge') && Number.isFinite(at)) r('cycleAge').textContent = `· ran ${fmtAgo(d.generatedAt)}`;
+	}
+
+	async function loadLive() {
+		try {
+			const l = await (await fetch('/api/live')).json();
+			live.desk = l.desk || null;
+			live.guard = l.guard || null;
+		} catch {
+			/* the band degrades to the half the snapshot already carries */
+		}
+		renderBand();
 	}
 
 	function renderSegments(d) {
@@ -334,7 +495,24 @@
 		}
 	}
 
+	// One request a minute while the tab is visible, which the 60s cache header on
+	// /api/receipts already sizes. A hidden tab costs nothing.
+	function poll() {
+		if (document.hidden) return;
+		loadReceipts();
+		loadLive();
+	}
+
+	if (bandEl) {
+		setInterval(poll, 60_000);
+		setInterval(() => {
+			if (!document.hidden) renderBand();
+		}, 1000);
+		document.addEventListener('visibilitychange', poll);
+	}
+
 	loadReceipts();
+	loadLive();
 	loadConfig();
 	loadStats();
 	loadPermalink();
