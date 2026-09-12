@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SELF } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 
 const ORIGIN = 'https://macrohard.nz';
 
@@ -39,6 +39,26 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		const res = await SELF.fetch(`${ORIGIN}/404.js`);
 		expect(res.status).toBe(200);
 		expect(await res.text()).toContain('location.pathname');
+	});
+
+	it('the Scope list matches the configured repositories, in number and in name', async () => {
+		const res = await SELF.fetch(`${ORIGIN}/method`);
+		expect(res.status).toBe(200);
+		const html = await res.text();
+		// Scope only: the Source section and the footer link to this repo as well.
+		const scope = html.slice(html.indexOf('id="scope"'), html.indexOf('id="commits"'));
+		expect(scope.length).toBeGreaterThan(0);
+		const repos = env.GITHUB_REPOS.split(',')
+			.map((r) => r.trim())
+			.filter(Boolean);
+		// Every configured repo is listed...
+		for (const repo of repos) expect(scope).toContain(`https://github.com/${env.GITHUB_OWNER}/${repo}"`);
+		// ...and nothing else is, so a repo dropped from the config cannot linger on the page.
+		expect(scope.match(/https:\/\/github\.com\/[^"]+/g) ?? []).toHaveLength(repos.length);
+		// The prose count is the figure that actually drifted: it said three while four were configured.
+		const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+		expect(words[repos.length]).toBeDefined();
+		expect(scope.toLowerCase()).toContain(`${words[repos.length]} public repositories`);
 	});
 
 	it('redirects www even for asset paths', async () => {
