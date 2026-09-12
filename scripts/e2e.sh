@@ -25,7 +25,7 @@ r=$(get "$BASE/");                 check "GET / is 200 HTML"                 $([
 h=$(curl -sSI "$BASE/");           check "CSP header on /"                   $(echo "$h" | grep -qi '^content-security-policy'; echo $?) "no CSP"
                                    check "nosniff on /"                      $(echo "$h" | grep -qi 'x-content-type-options: nosniff'; echo $?) "missing"
 r=$(get "$BASE/method");           check "GET /method has the trailer rule"  $([ "${r%%|*}" = 200 ] && grep -q 'Co-Authored-By' "$TMP/body"; echo $?) "$r"
-r=$(get "$BASE/definitely-not");   check "unknown path is a 404 WITH a body" $([ "${r%%|*}" = 404 ] && grep -q 'Nothing here' "$TMP/body"; echo $?) "$r"
+r=$(get "$BASE/definitely-not");   check "unknown path is a 404 WITH a body" $([ "${r%%|*}" = 404 ] && grep -q 'qualified opinion' "$TMP/body"; echo $?) "$r"
 r=$(get "https://www.$HOST/method"); check "www → apex 301"                 $([ "${r%%|*}" = 301 ] && [ "${r##*|}" = "$BASE/method" ]; echo $?) "$r"
 r=$(get "$BASE/og.png");           check "generic share image is PNG"        $([ "${r%%|*}" = 200 ] && [[ "$r" == *image/png* ]]; echo $?) "$r"
 r=$(get "$BASE/favicon.svg");      check "favicon"                           $([ "${r%%|*}" = 200 ]; echo $?) "$r"

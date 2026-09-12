@@ -630,6 +630,20 @@ h2 {
 	display: none;
 }
 
+/* 404 — auditor's report */
+.opinion {
+	border-left: 2px solid var(--ink);
+	padding-left: 18px;
+}
+.nf-meta {
+	font-family: var(--mono);
+	font-size: 13px;
+	color: var(--muted);
+	display: flex;
+	gap: 28px;
+	flex-wrap: wrap;
+}
+
 /* Notes 3–7 */
 .seg-row {
 	grid-template-columns: minmax(0, 1fr) 110px 150px 90px 110px;

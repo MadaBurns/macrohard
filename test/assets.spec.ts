@@ -28,7 +28,17 @@ describe('static routes through the Worker (run_worker_first)', () => {
 	it('returns the 404 page with a 404 status for unknown paths', async () => {
 		const res = await SELF.fetch(`${ORIGIN}/definitely-not-here`);
 		expect(res.status).toBe(404);
-		expect(await res.text()).toContain('Nothing here');
+		const html = await res.text();
+		expect(html).toContain('qualified opinion');
+		expect(html).toContain('<code data-path>');
+		expect(html).toContain('src="/404.js"');
+		expect(html).not.toContain('<script>');
+	});
+
+	it('serves the 404 path filler as a static asset', async () => {
+		const res = await SELF.fetch(`${ORIGIN}/404.js`);
+		expect(res.status).toBe(200);
+		expect(await res.text()).toContain('location.pathname');
 	});
 
 	it('redirects www even for asset paths', async () => {
