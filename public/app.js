@@ -28,6 +28,10 @@
 		return `${Math.round(h / 24)}d ago`;
 	}
 
+	const fmtShare = (agent, total) => (total ? `${Math.round((agent / total) * 1000) / 10}%` : '—');
+	const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+	const fmtSmall = (n) => (n >= 0 && n < WORDS.length ? WORDS[n] : fmtInt(n));
+
 	// ---------------------------------------------------------------------
 	// Receipts
 	// ---------------------------------------------------------------------
@@ -72,7 +76,7 @@
 			rows.appendChild(node);
 		}
 		if (!(d.ledger || []).length) {
-			rows.innerHTML = '<div class="ledger-empty">No agent-authored commits in the window. That would be news.</div>';
+			rows.innerHTML = '<div class="ledger-empty">No agent-authored commits in the window.</div>';
 		}
 		const more = Math.max(0, (d.agentCommits || 0) - (d.ledger || []).length);
 		const foot = r('ledgerMore');
@@ -88,6 +92,58 @@
 				foot.append(a, i < repos.length - 1 ? ', ' : '');
 			});
 		}
+
+		renderSegments(d);
+		renderSelf(d);
+		renderIdentities(d);
+	}
+
+	function renderSegments(d) {
+		const rows = $('#segment-rows');
+		const tpl = $('#tpl-segment-row');
+		if (!rows || !tpl) return;
+		rows.replaceChildren();
+		const repos = [...(d.repos || [])].sort((a, b) => b.totalCommits - a.totalCommits);
+		for (const x of repos) {
+			const node = tpl.content.firstElementChild.cloneNode(true);
+			const a = $('[data-f="name"]', node);
+			a.textContent = x.name;
+			a.href = `${x.url}/commits`;
+			$('[data-f="total"]', node).textContent = fmtInt(x.totalCommits);
+			$('[data-f="agent"]', node).textContent = fmtInt(x.agentCommits);
+			$('[data-f="share"]', node).textContent = fmtShare(x.agentCommits, x.totalCommits);
+			$('[data-f="prs"]', node).textContent = fmtInt(x.prsMerged);
+			rows.appendChild(node);
+		}
+		r('segTotal').textContent = fmtInt(d.totalCommits);
+		r('segAgent').textContent = fmtInt(d.agentCommits);
+		r('segShare').textContent = `${d.agentShare}%`;
+		r('segPrs').textContent = fmtInt(d.prsMerged);
+	}
+
+	function renderSelf(d) {
+		const el = $('#note-self');
+		if (!el) return;
+		const me = (d.repos || []).find((x) => x.name === el.dataset.self);
+		if (!me) return;
+		r('selfAgent').textContent = fmtInt(me.agentCommits);
+		r('selfTotal').textContent = fmtInt(me.totalCommits);
+		const rest = me.totalCommits - me.agentCommits;
+		r('selfRest').textContent =
+			rest === 0
+				? 'All of them.'
+				: rest === 1
+					? 'The one that does not is a merge, performed by the human.'
+					: `The ${fmtSmall(rest)} that do not are merges, performed by the human.`;
+	}
+
+	function renderIdentities(d) {
+		const ul = $('#kmp-list');
+		if (!ul) return;
+		const names = d.agentIdentities || [];
+		ul.replaceChildren(...names.map((n) => Object.assign(document.createElement('li'), { textContent: n })));
+		const bare = $('#kmp-bare');
+		if (bare) bare.hidden = !names.includes('Claude');
 	}
 
 	// ---------------------------------------------------------------------
@@ -128,7 +184,7 @@
 	function setBusy(on) {
 		go.disabled = on;
 		out.classList.toggle('busy', on);
-		if (on) out.innerHTML = '<div class="staff-empty">Convening the board…</div>';
+		if (on) out.innerHTML = '<div class="staff-empty">Costing the proposal…</div>';
 	}
 
 	function showError(msg) {
@@ -153,7 +209,7 @@
 			});
 		} catch {
 			setBusy(false);
-			out.innerHTML = '<div class="staff-empty">Network trouble. The board will reconvene.</div>';
+			out.innerHTML = '<div class="staff-empty">Network trouble. Try again.</div>';
 			return;
 		}
 		setBusy(false);

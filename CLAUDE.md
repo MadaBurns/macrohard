@@ -82,3 +82,5 @@ Keep it that way — a test that needs a real binding belongs in `scripts/e2e.sh
 - `STAFF_RL` is optional in `AppEnv` because the test pool's wrangler doesn't provide the binding;
   the daily cap is what holds there. `BROWSER` is optional for the same reason.
 - The per-IP rate limit is per-location and approximate. It is not a spend bound; the daily cap is.
+- This repository counts itself, and Note 5 on the front page says its only non-agent commits are merges. Every non-merge commit
+  must carry the `Co-Authored-By: Claude …` trailer; merges are the human's. Break this and Note 5 becomes false.

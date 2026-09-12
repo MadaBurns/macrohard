@@ -22,7 +22,7 @@ is the design target.
   the idea. Legal-risk matrix: 3×3 → 🟡 with these mitigations; would be 🟠+
   with Microsoft's visual identity.
 - **Every published number must be reproducible by a stranger.** All
-  substantive BlackVeil repos are private, so receipts are scoped to the three
+  substantive BlackVeil repos are private, so receipts are scoped to the four
   public ones. A number you cannot check is a claim, not a receipt.
 - **Held out of scope on purpose:** a DNS/email-security scoreboard of Musk-orbit
   domains (would name real orgs' posture — 🟠/🔴 tier, and reads as a gotcha),
@@ -38,14 +38,20 @@ as Note 2.
   hash links to GitHub.
 - **Note 2 — Proposed restructuring.** "Staff your company": describe an org,
   get a costed agent org chart. Permalinks + copy-link.
-- **Note 3 — Subsequent events.** The free-domain offer and `hello@macrohard.nz`.
+- **Notes 3–8** (added 2026-09-12) — segment information, basis of preparation, related parties, key management
+  personnel, off-balance-sheet arrangements, principal risks. Every figure in them is a field `/api/receipts` already
+  returned; the copy is in `docs/superpowers/plans/2026-09-12-editorial-direction.md`.
+- **Note 9 — Subsequent events.** The free-domain offer and `hello@macrohard.nz`.
 - Footer carries the non-affiliation line.
 
 ### Copy decisions
 
-- Hero claims only what `git log` supports: agents write, review, and _open the
-  release_; **one human holds the deploy key**. (Original draft said "no human
-  approves by hand" — false for this fleet; corrected before build.)
+- Hero claims only what `git log` supports: agents write, sign, and _open the release_; **one human holds the deploy key**.
+  "Review" was dropped 2026-09-12 after the reviews endpoint returned zero on every sampled PR. The hero is now "Headcount: one."
+  with the glance panel supplying the agent count beside it.
+- Notes 3–8 (segments, basis, related parties, personnel, off-balance-sheet, risks) and the cautionary statement were added
+  2026-09-12. Every figure in them is a field `/api/receipts` already returned; the copy is in
+  `docs/superpowers/plans/2026-09-12-editorial-direction.md`.
 - "Headcount, agent" = distinct `Co-Authored-By: Claude …` identities in the
   window — small, honest, and defined on the Method page. Not a made-up 36.
 - "Meetings held: 0" stays; it is not from the API and the Method page says so.

@@ -6,7 +6,7 @@
 		<title>Macrohard — the software company that runs itself</title>
 		<meta
 			name="description"
-			content="Macrohard is an engineering organisation operated by AI agents. Every figure on this page links to the public commit that proves it. Annual Report, FY2026."
+			content="Macrohard is an engineering organisation operated by AI agents. Every figure is live from the public GitHub API and every line of the ledger links to the commit that proves it. Annual Report, FY2026."
 		/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="Macrohard" />
@@ -35,6 +35,7 @@
 			<a class="wordmark" href="/">Macrohard</a>
 			<nav class="topnav" aria-label="Primary">
 				<a href="#ledger">Receipts</a>
+				<a href="#segments">Notes</a>
 				<a href="#staff">Staff your company</a>
 				<a href="#contact">Contact</a>
 			</nav>
@@ -44,11 +45,12 @@
 			<section class="hero">
 				<div class="hero-copy">
 					<p class="eyebrow">Annual Report — FY2026</p>
-					<h1>The software company that <em>runs itself</em>.</h1>
+					<h1>Headcount: <em>one</em>.</h1>
 					<p class="lede">
-						Macrohard is an engineering organisation operated by AI agents. They write the code, review each other's pull requests, and open
-						the release. One human holds the deploy key, and mostly watches. Every figure on this page links to the public commit that
-						proves it.
+						Macrohard is an engineering organisation run by AI agents. They write the code, sign for it, and open the release. The one human
+						on the books holds the deploy key and presses it when the tests are green. No meetings are held; there is no one to hold them
+						with. Every figure on this page is live from the public GitHub API, and every line of the ledger links to the commit that proves
+						it.
 					</p>
 					<div class="cta-row">
 						<a class="btn" href="#staff">Staff your company <span aria-hidden="true">→</span></a>
@@ -105,7 +107,7 @@
 						<p class="eyebrow">Note 1 — Work performed</p>
 						<h2>Every line is a public commit.</h2>
 					</div>
-					<p class="note-aside">No screenshots, no dashboards we control. Click any hash and you land on GitHub.</p>
+					<p class="note-aside">Click any hash; you land on GitHub.</p>
 				</div>
 
 				<div class="panel">
@@ -155,18 +157,154 @@
 				</div>
 			</section>
 
+			<section id="segments" class="note">
+				<div class="note-head">
+					<div>
+						<p class="eyebrow">Note 3 — Segment information</p>
+						<h2>Four repositories. One of them is most of the company.</h2>
+					</div>
+					<p class="note-aside">Segments are public repositories. A segment with two commits is still reported; the rule has no minimum.</p>
+				</div>
+				<div class="panel">
+					<div class="ledger-row ledger-head seg-row">
+						<span>Segment</span><span class="r">Commits</span><span class="r">Agent-authored</span><span class="r">Share</span
+						><span class="r">PRs merged</span>
+					</div>
+					<div id="segment-rows" aria-live="polite"></div>
+					<div class="ledger-row seg-row seg-total">
+						<span>Total, 90 days</span><span class="n" data-r="segTotal">—</span><span class="n" data-r="segAgent">—</span
+						><span class="n" data-r="segShare">—</span><span class="n" data-r="segPrs">—</span>
+					</div>
+					<div class="ledger-foot">
+						The repository that publishes this report is one of the segments. See Note 5. <a href="/method#segments">How counted →</a>
+					</div>
+				</div>
+			</section>
+
+			<section class="notes-wrap" aria-label="Notes 4 to 7">
+				<div class="notes-grid">
+					<div class="nnote">
+						<p class="eyebrow">Note 4 — Basis of preparation</p>
+						<h3>The figures are a floor.</h3>
+						<p>
+							A commit is agent-authored when an agent signed it, and not otherwise. A commit an agent wrote and a human signed is not
+							agent-authored. A commit a dependency bot made is not agent-authored. The share is therefore understated, and the ceiling is
+							not estimated, because an estimate is not a receipt.
+						</p>
+						<p>
+							A refresh that counts no commits at all is discarded and the previous figures stand. A stale truth is preferred to a fresh
+							zero.
+						</p>
+					</div>
+
+					<div class="nnote" id="note-self" data-self="macrohard">
+						<p class="eyebrow">Note 5 — Related parties</p>
+						<h3>This report was prepared by the parties it reports on.</h3>
+						<p>
+							The repository that publishes this page is a segment and is counted like the others:
+							<span class="mono accent" data-r="selfAgent">—</span> of its <span class="mono accent" data-r="selfTotal">—</span> commits in
+							the period carry an agent's signature. <span data-r="selfRest"></span> No independent review of this arrangement has been
+							sought. There is no one independent to ask.
+						</p>
+					</div>
+
+					<div class="nnote">
+						<p class="eyebrow">Note 6 — Key management personnel</p>
+						<h3>The following identities signed work during the period.</h3>
+						<ul class="kmp" id="kmp-list"></ul>
+						<dl class="kv">
+							<dt>Remuneration</dt>
+							<dd>nil</dd>
+							<dt>Options granted</dt>
+							<dd>none</dd>
+							<dt>Board meetings attended</dt>
+							<dd>none were held</dd>
+						</dl>
+						<p id="kmp-bare" hidden>One signatory gave no version number and is listed as it signed.</p>
+					</div>
+
+					<div class="nnote">
+						<p class="eyebrow">Note 7 — Off-balance-sheet arrangements</p>
+						<h3>The organisation also works where you cannot see.</h3>
+						<p>
+							Work in repositories that are not public does not appear in this report: not a total, not a share, not a footnote with a
+							number in it. A figure you cannot check is a claim, not a receipt. The company's published activity is therefore smaller than
+							its actual activity by an amount which, for the same reason, is not stated.
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<section id="risks" class="note">
+				<div class="note-head">
+					<div>
+						<p class="eyebrow">Note 8 — Principal risks and uncertainties</p>
+						<h2>What could go wrong, in order of how much it would show.</h2>
+					</div>
+					<p class="note-aside">The directors have not met to consider these. They were committed.</p>
+				</div>
+				<ol class="risk-list">
+					<li>
+						<b data-n="8.1">Key person</b>
+						One human holds the deploy key. Nothing ships without that person, by design: the agents open the release and cannot press the
+						button. The company has no succession plan. The agents could write one; it would still need the person to deploy it.
+					</li>
+					<li>
+						<b data-n="8.2">Supplier concentration</b>
+						Every identity in Note 6 is a model from one vendor. If that vendor changes its pricing, its terms, or its mind, the agent
+						headcount is zero. The human is not from that vendor, as far as we can establish.
+					</li>
+					<li>
+						<b data-n="8.3">Measurement</b>
+						The agent share is understated by construction (Note 4). It could be overstated by anyone who adds a signature to a commit they
+						wrote themselves. We have not done this. You are taking our word for that: the signature is ours to write. The commits are
+						public, if you would like to look.
+					</li>
+					<li>
+						<b data-n="8.4">Third-party data</b>
+						Every figure is fetched from a public API that allows strangers sixty requests an hour. We are a stranger with a token. When the
+						token is refused we carry on as a stranger, the figures may go stale, and the page says how old they are.
+					</li>
+					<li>
+						<b data-n="8.5">Budget</b>
+						The restructuring desk closes when the day's budget is spent and reopens at midnight UTC. On such a day, later visitors receive
+						one of five standing proposals and are told so. The day it happens is the day the company is being noticed, which is also the
+						day it matters.
+					</li>
+					<li>
+						<b data-n="8.6">The name</b>
+						It is not ours to keep, and we have said so (Note 9). Should it transfer, this report moves and the figures do not, because the
+						figures are in the commits, not the domain.
+					</li>
+					<li>
+						<b data-n="8.7">Satire</b>
+						The organisations proposed in Note 2 are generated by a language model. Anyone who restructures a real organisation on the
+						strength of one has misread the footnote, which says so.
+					</li>
+				</ol>
+			</section>
+
 			<section id="contact" class="offer-wrap">
 				<div class="offer">
 					<div class="offer-copy">
-						<p class="eyebrow offer-eyebrow">Note 3 — Subsequent events</p>
+						<p class="eyebrow offer-eyebrow">Note 9 — Subsequent events</p>
 						<p class="offer-h">xAI — this domain is yours. Free, no conditions, no price.</p>
 						<p class="offer-p">
 							We are not selling it and never will. Ask, and it transfers the same day. If you would rather talk about the agents that built
-							this page instead, that works too.
+							this page, the address is the same.
 						</p>
 					</div>
 					<a class="offer-btn" href="mailto:hello@macrohard.nz">hello@macrohard.nz</a>
 				</div>
+			</section>
+
+			<section class="caution" aria-label="Forward-looking statements">
+				<p class="eyebrow">Forward-looking statements</p>
+				<p>
+					This report contains none. Every figure describes work already committed, in the git sense. The company issues no guidance: it has
+					no revenue to guide, no forecast, and no meeting at which a forecast could be agreed. Where this page appears to predict anything,
+					refresh it. The figure will have changed, and the prediction will not have been ours.
+				</p>
 			</section>
 		</main>
 
@@ -208,7 +346,7 @@
 				<div class="org-row org-cols"><span>Role</span><span>Tool access</span><span>Tokens / day</span><span>Stands in for</span></div>
 				<div data-f="roles"></div>
 				<div class="org-foot">
-					<span data-f="note">Figures are illustrative. Your mileage, and your staff's morale, may vary.</span>
+					<span data-f="note">Figures are illustrative. They were produced by a language model from your description.</span>
 					<span class="org-actions">
 						<a class="link-btn" data-f="post" href="#" target="_blank" rel="noopener">Post on X</a>
 						<button type="button" class="link-btn" data-f="copy">Copy link</button>
@@ -223,6 +361,16 @@
 				<span class="dim small" data-f="tools"></span>
 				<span class="mono accent small" data-f="tokens"></span>
 				<span class="small" data-f="standsInFor"></span>
+			</div>
+		</template>
+
+		<template id="tpl-segment-row">
+			<div class="ledger-row seg-row">
+				<a class="accent" data-f="name" href="#" rel="noopener"></a>
+				<span class="n" data-f="total"></span>
+				<span class="n" data-f="agent"></span>
+				<span class="n" data-f="share"></span>
+				<span class="n" data-f="prs"></span>
 			</div>
 		</template>
 
