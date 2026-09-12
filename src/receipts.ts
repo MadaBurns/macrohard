@@ -186,18 +186,49 @@ export function nextLink(res: Response): string | null {
 	return null;
 }
 
-async function paginate<T>(fetcher: Fetcher, url: string, token: string | undefined, stop?: (page: T[]) => boolean): Promise<T[]> {
-	const headers: Record<string, string> = {
-		accept: 'application/vnd.github+json',
-		'user-agent': 'macrohard.nz receipts (+https://macrohard.nz/method)',
-		'x-github-api-version': '2022-11-28',
-	};
-	if (token) headers.authorization = `Bearer ${token}`;
+const BASE_HEADERS: Record<string, string> = {
+	accept: 'application/vnd.github+json',
+	'user-agent': 'macrohard.nz receipts (+https://macrohard.nz/method)',
+	'x-github-api-version': '2022-11-28',
+};
 
+/**
+ * Fetch with the token when there is one, and fall back to an anonymous request
+ * if GitHub rejects it (401 — bad, revoked, expired or whitespace-mangled).
+ *
+ * A token is an optimisation here: it lifts the anonymous 60/hr ceiling so the
+ * cron stops losing to shared egress IPs. It must never be load-bearing — before
+ * the secret existed the anonymous path worked, and a bad secret must not be able
+ * to freeze the snapshot permanently. `tokenState` is shared across a refresh so
+ * one rejection disables the token for the rest of it rather than doubling every
+ * request.
+ */
+export interface TokenState {
+	rejected: boolean;
+}
+
+async function ghFetch(fetcher: Fetcher, url: string, token: string | undefined, state: TokenState): Promise<Response> {
+	const clean = token?.trim();
+	if (clean && !state.rejected) {
+		const res = await fetcher(url, { headers: { ...BASE_HEADERS, authorization: `Bearer ${clean}` } });
+		if (res.status !== 401) return res;
+		state.rejected = true;
+		console.error('GitHub rejected GITHUB_TOKEN (401) — falling back to anonymous for this refresh');
+	}
+	return fetcher(url, { headers: BASE_HEADERS });
+}
+
+async function paginate<T>(
+	fetcher: Fetcher,
+	url: string,
+	token: string | undefined,
+	state: TokenState,
+	stop?: (page: T[]) => boolean,
+): Promise<T[]> {
 	const out: T[] = [];
 	let next: string | null = url;
 	for (let i = 0; i < MAX_PAGES && next; i++) {
-		const res = await fetcher(next, { headers });
+		const res = await ghFetch(fetcher, next, token, state);
 		if (!res.ok) throw new Error(`GitHub ${res.status} for ${next}`);
 		const page = (await res.json()) as T[];
 		out.push(...page);
@@ -207,15 +238,23 @@ async function paginate<T>(fetcher: Fetcher, url: string, token: string | undefi
 	return out;
 }
 
-export async function fetchRepo(fetcher: Fetcher, owner: string, name: string, since: Date, token?: string): Promise<RepoInput> {
+export async function fetchRepo(
+	fetcher: Fetcher,
+	owner: string,
+	name: string,
+	since: Date,
+	token?: string,
+	state: TokenState = { rejected: false },
+): Promise<RepoInput> {
 	const base = `https://api.github.com/repos/${owner}/${name}`;
 	const sinceIso = since.toISOString();
-	const commits = await paginate<GitHubCommit>(fetcher, `${base}/commits?since=${encodeURIComponent(sinceIso)}&per_page=100`, token);
+	const commits = await paginate<GitHubCommit>(fetcher, `${base}/commits?since=${encodeURIComponent(sinceIso)}&per_page=100`, token, state);
 	// Closed PRs come newest-updated first; stop once a whole page predates the window.
 	const pulls = await paginate<GitHubPull>(
 		fetcher,
 		`${base}/pulls?state=closed&sort=updated&direction=desc&per_page=100`,
 		token,
+		state,
 		(page) => page.length > 0 && page.every((p) => p.created_at < sinceIso && (!p.merged_at || p.merged_at < sinceIso)),
 	);
 	return { name, url: `https://github.com/${owner}/${name}`, commits, pulls };
@@ -234,7 +273,9 @@ export async function refreshReceipts(kv: KVNamespace, opts: RefreshOpts): Promi
 	const now = opts.now ?? new Date();
 	const fetcher = opts.fetcher ?? ((u, i) => fetch(u, i));
 	const since = new Date(now.getTime() - opts.windowDays * 86_400_000);
-	const inputs = await Promise.all(opts.repos.map((r) => fetchRepo(fetcher, opts.owner, r, since, opts.token)));
+	// One state across the whole refresh: a rejected token is disabled once, not per repo.
+	const state: TokenState = { rejected: false };
+	const inputs = await Promise.all(opts.repos.map((r) => fetchRepo(fetcher, opts.owner, r, since, opts.token, state)));
 	const receipts = aggregate(inputs, now, opts.windowDays);
 	// A snapshot that shows zeros is worse than a stale one: keep it if nothing was counted.
 	if (receipts.totalCommits === 0) {
