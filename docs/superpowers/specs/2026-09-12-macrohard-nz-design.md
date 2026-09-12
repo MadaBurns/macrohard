@@ -137,9 +137,11 @@ redirect, JSON 404s).
 - `/s/:id` is server-personalised with HTMLRewriter: title, description,
   `og:*`, canonical — a shared chart renders as its own card.
 - `/og/:id.png` is rendered once by Browser Rendering (`BROWSER` binding,
-  puppeteer, 1200×630 from `ogCardHtml`) and cached in KV for the permalink's
-  lifetime; pre-rendered in `waitUntil` at generation time so the response
-  never waits. Any failure — quota, plan, timeout — 302s to the generic card.
+  puppeteer, 1200×630 from `ogCardHtml`) and cached in KV for a year
+  (`OG_TTL`); pre-rendered in `waitUntil` at generation time so the response
+  never waits. The permalink it belongs to is stored with no expiry at all —
+  someone posted that link — and the image re-renders from the stored org on a
+  miss, bounded by the per-id lock and the daily render budget. Any failure — quota, plan, timeout — 302s to the generic card.
 - Every result carries pre-written share text (`shareText`) and the page
   offers "Post on X" (intent link; nothing auto-posts) and "Copy link".
 - `/api/stats` exposes an "organisations restructured" KV counter.
