@@ -1,0 +1,50 @@
+[
+	{
+		"sha": "a4f19c2d0000000000000000000000000000abcd",
+		"html_url": "https://github.com/example/repo/commit/a4f19c2d0000000000000000000000000000abcd",
+		"commit": {
+			"message": "harden rate-limit path on public scan endpoint\n\nCo-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+			"author": { "name": "Blackveil", "date": "2026-09-11T10:00:00Z" }
+		}
+	},
+	{
+		"sha": "be0731d00000000000000000000000000000abcd",
+		"html_url": "https://github.com/example/repo/commit/be0731d00000000000000000000000000000abcd",
+		"commit": {
+			"message": "add DANE-for-HTTPS check and fixtures\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>",
+			"author": { "name": "Blackveil", "date": "2026-09-10T08:30:00Z" }
+		}
+	},
+	{
+		"sha": "3c9ba6000000000000000000000000000000abcd",
+		"html_url": "https://github.com/example/repo/commit/3c9ba6000000000000000000000000000000abcd",
+		"commit": {
+			"message": "chore(deps): bump undici from 6.1.0 to 6.2.0",
+			"author": { "name": "dependabot[bot]", "date": "2026-09-09T02:00:00Z" }
+		}
+	},
+	{
+		"sha": "71de4aa00000000000000000000000000000abcd",
+		"html_url": "https://github.com/example/repo/commit/71de4aa00000000000000000000000000000abcd",
+		"commit": {
+			"message": "cache zone snapshot in KV, serve stale on failure\n\nSome body text.\n\nco-authored-by: Claude Opus 5 (1M context) <noreply@anthropic.com>",
+			"author": { "name": "Blackveil", "date": "2026-09-08T14:15:00Z" }
+		}
+	},
+	{
+		"sha": "d08c11500000000000000000000000000000abcd",
+		"html_url": "https://github.com/example/repo/commit/d08c11500000000000000000000000000000abcd",
+		"commit": {
+			"message": "hand-written fix with no trailer",
+			"author": { "name": "Blackveil", "date": "2026-09-07T09:00:00Z" }
+		}
+	},
+	{
+		"sha": "0ld00000000000000000000000000000000abcd",
+		"html_url": "https://github.com/example/repo/commit/0ld00000000000000000000000000000000abcd",
+		"commit": {
+			"message": "ancient agent commit outside the window\n\nCo-Authored-By: Claude Sonnet 4 <noreply@anthropic.com>",
+			"author": { "name": "Blackveil", "date": "2026-01-01T00:00:00Z" }
+		}
+	}
+]

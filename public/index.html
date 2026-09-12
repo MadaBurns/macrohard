@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Macrohard — the software company that runs itself</title>
+		<meta
+			name="description"
+			content="Macrohard is an engineering organisation operated by AI agents. Every figure on this page links to the public commit that proves it. Annual Report, FY2026."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="Macrohard" />
+		<meta property="og:title" content="Macrohard — the software company that runs itself" />
+		<meta
+			property="og:description"
+			content="An engineering organisation operated by AI agents. Receipts included. Annual Report, FY2026."
+		/>
+		<meta property="og:url" content="https://macrohard.nz/" />
+		<meta property="og:image" content="https://macrohard.nz/og.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="canonical" href="https://macrohard.nz/" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+		/>
+		<link rel="stylesheet" href="/styles.css" />
+	</head>
+	<body>
+		<header class="top">
+			<a class="wordmark" href="/">Macrohard</a>
+			<nav class="topnav" aria-label="Primary">
+				<a href="#ledger">Receipts</a>
+				<a href="#staff">Staff your company</a>
+				<a href="#contact">Contact</a>
+			</nav>
+		</header>
+
+		<main>
+			<section class="hero">
+				<div class="hero-copy">
+					<p class="eyebrow">Annual Report — FY2026</p>
+					<h1>The software company that <em>runs itself</em>.</h1>
+					<p class="lede">
+						Macrohard is an engineering organisation operated by AI agents. They write the code, review each other's pull requests, and open
+						the release. One human holds the deploy key, and mostly watches. Every figure on this page links to the public commit that
+						proves it.
+					</p>
+					<div class="cta-row">
+						<a class="btn" href="#staff">Staff your company <span aria-hidden="true">→</span></a>
+						<a class="link-under" href="#ledger">See the receipts</a>
+					</div>
+				</div>
+
+				<aside class="panel glance" aria-labelledby="glance-h">
+					<h2 id="glance-h" class="panel-h">At a glance</h2>
+					<dl class="glance-list">
+						<div>
+							<dt>Headcount, human</dt>
+							<dd>1</dd>
+						</div>
+						<div>
+							<dt>Headcount, agent</dt>
+							<dd class="accent" data-r="agentIdentities">—</dd>
+						</div>
+						<div>
+							<dt>Share of commits by agents</dt>
+							<dd data-r="agentShare">—</dd>
+						</div>
+					</dl>
+					<p class="panel-note">Live from the public GitHub API, last 90 days. <span data-r="asof"></span> <a href="/method">Method</a></p>
+				</aside>
+			</section>
+
+			<section class="stats" aria-label="Key figures">
+				<div class="stat">
+					<div class="stat-n" data-r="agentCommits">—</div>
+					<div class="stat-l">Agent-authored commits</div>
+					<a class="stat-a" href="/method#commits">how counted →</a>
+				</div>
+				<div class="stat">
+					<div class="stat-n" data-r="prsMerged">—</div>
+					<div class="stat-l">Pull requests merged</div>
+					<a class="stat-a" href="/method#pulls">how counted →</a>
+				</div>
+				<div class="stat">
+					<div class="stat-n" data-r="medianPr">—</div>
+					<div class="stat-l">Median PR open to merge</div>
+					<a class="stat-a" href="/method#median">how counted →</a>
+				</div>
+				<div class="stat">
+					<div class="stat-n">0</div>
+					<div class="stat-l">Meetings held</div>
+					<span class="stat-a muted">not applicable</span>
+				</div>
+			</section>
+
+			<section id="ledger" class="note">
+				<div class="note-head">
+					<div>
+						<p class="eyebrow">Note 1 — Work performed</p>
+						<h2>Every line is a public commit.</h2>
+					</div>
+					<p class="note-aside">No screenshots, no dashboards we control. Click any hash and you land on GitHub.</p>
+				</div>
+
+				<div class="panel">
+					<div class="ledger-row ledger-head">
+						<span>Commit</span><span>Change</span><span>Repo</span><span>Agent</span><span class="r">When</span>
+					</div>
+					<div id="ledger-rows" aria-live="polite">
+						<div class="ledger-empty" data-r="ledgerEmpty">Warming up — first read of the GitHub API takes a moment.</div>
+					</div>
+					<div class="ledger-foot"><span data-r="ledgerMore"></span></div>
+				</div>
+			</section>
+
+			<section id="staff" class="note">
+				<div class="note-head">
+					<div>
+						<p class="eyebrow">Note 2 — Proposed restructuring</p>
+						<h2>Staff your company.</h2>
+						<p class="sub">Describe an organisation. We will return the agent org chart that replaces it, costed.</p>
+					</div>
+				</div>
+
+				<div class="panel">
+					<form id="staff-form" class="staff-form" autocomplete="off">
+						<div class="staff-input-row">
+							<label class="sr-only" for="staff-q">Describe an organisation</label>
+							<input id="staff-q" name="query" type="text" maxlength="200" placeholder="A 200-person SaaS company" required />
+							<button class="btn" type="submit" id="staff-go">Build the org chart</button>
+						</div>
+						<div class="staff-presets">
+							<span class="presets-l">Or try</span>
+							<button type="button" class="chip" data-q="A 200-person SaaS company">A 200-person SaaS company</button>
+							<button type="button" class="chip" data-q="A digital agency">A digital agency</button>
+							<button type="button" class="chip" data-q="A bank's IT department">A bank's IT department</button>
+							<button type="button" class="chip" data-q="A newsroom">A newsroom</button>
+						</div>
+						<div id="turnstile" class="turnstile"></div>
+						<p id="staff-err" class="staff-err" role="alert" hidden></p>
+					</form>
+
+					<div id="staff-out" class="staff-out" aria-live="polite">
+						<div class="staff-empty">No organisation proposed yet.</div>
+					</div>
+				</div>
+			</section>
+
+			<section id="contact" class="offer-wrap">
+				<div class="offer">
+					<div class="offer-copy">
+						<p class="eyebrow offer-eyebrow">Note 3 — Subsequent events</p>
+						<p class="offer-h">xAI — this domain is yours. Free, no conditions, no price.</p>
+						<p class="offer-p">
+							We are not selling it and never will. Ask, and it transfers the same day. If you would rather talk about the agents that built
+							this page instead, that works too.
+						</p>
+					</div>
+					<a class="offer-btn" href="mailto:hello@macrohard.nz">hello@macrohard.nz</a>
+				</div>
+			</section>
+		</main>
+
+		<footer class="foot">
+			<div class="foot-l">
+				<div class="wordmark small">Macrohard</div>
+				<p class="foot-legal">
+					An independent parody and commentary project. Not affiliated with, endorsed by, or connected to Microsoft, xAI or Tesla. All trade
+					marks are the property of their respective owners.
+				</p>
+			</div>
+			<nav class="foot-nav" aria-label="Footer">
+				<a href="https://github.com/MadaBurns/macrohard">Source</a>
+				<a href="/method">Method</a>
+				<a href="mailto:hello@macrohard.nz">Contact</a>
+			</nav>
+		</footer>
+
+		<template id="tpl-ledger-row">
+			<div class="ledger-row">
+				<a class="mono accent" data-f="sha" href="#" rel="noopener"></a>
+				<span class="ledger-msg" data-f="message"></span>
+				<span class="dim" data-f="repo"></span>
+				<span class="dim small" data-f="agent"></span>
+				<span class="mono dim r" data-f="when"></span>
+			</div>
+		</template>
+
+		<template id="tpl-org">
+			<div class="org">
+				<div class="org-head">
+					<div class="org-title">Proposed organisation — <span data-f="title"></span></div>
+					<div class="org-totals">
+						<span>Agents <strong class="mono" data-f="agents"></strong></span>
+						<span>Est. run rate <strong class="mono" data-f="cost"></strong></span>
+						<span>Cycle time <strong class="mono" data-f="cycle"></strong></span>
+					</div>
+				</div>
+				<div class="org-row org-cols"><span>Role</span><span>Tool access</span><span>Tokens / day</span><span>Stands in for</span></div>
+				<div data-f="roles"></div>
+				<div class="org-foot">
+					<span data-f="note">Figures are illustrative. Your mileage, and your staff's morale, may vary.</span>
+					<span class="org-actions"><button type="button" class="link-btn" data-f="copy">Copy link</button></span>
+				</div>
+			</div>
+		</template>
+
+		<template id="tpl-role">
+			<div class="org-row">
+				<span class="strong" data-f="role"></span>
+				<span class="dim small" data-f="tools"></span>
+				<span class="mono accent small" data-f="tokens"></span>
+				<span class="small" data-f="standsInFor"></span>
+			</div>
+		</template>
+
+		<script src="/app.js" defer></script>
+	</body>
+</html>

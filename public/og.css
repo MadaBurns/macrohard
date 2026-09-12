@@ -1,0 +1,63 @@
+body {
+	margin: 0;
+}
+.card {
+	width: 1200px;
+	height: 630px;
+	background: #f7f4ee;
+	color: #16130f;
+	font-family: 'IBM Plex Sans', sans-serif;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	padding: 64px 72px;
+	box-sizing: border-box;
+}
+.top {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.wm {
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+}
+.eb {
+	font-family: 'IBM Plex Mono', monospace;
+	font-size: 15px;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	color: #9c4a1a;
+}
+h1 {
+	margin: 0;
+	font-family: Newsreader, Georgia, serif;
+	font-weight: 400;
+	font-size: 96px;
+	line-height: 0.98;
+	letter-spacing: -0.022em;
+	max-width: 1000px;
+}
+h1 em {
+	font-style: italic;
+}
+.bot {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	border-top: 1px solid #16130f;
+	padding-top: 22px;
+}
+.sub {
+	font-size: 22px;
+	color: #463f35;
+	max-width: 720px;
+	line-height: 1.4;
+}
+.url {
+	font-family: 'IBM Plex Mono', monospace;
+	font-size: 20px;
+	color: #6b6459;
+}
