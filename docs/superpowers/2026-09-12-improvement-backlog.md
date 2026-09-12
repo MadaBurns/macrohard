@@ -244,3 +244,7 @@ Run the baseline chain from a cold start (rm -f worker-configuration.d.ts first)
 ## 5. Done
 
 - 2026-09-12 — T1, T2 (copy branch), T4 (drop branch), T5, T6, T9 — editorial PR https://github.com/MadaBurns/macrohard/pull/8. Verification: `test/assets.spec.ts` asserts each corrected sentence.
+
+## 6. Opened by the editorial PR
+
+- B6 — `public/og.png` carries a dated static agent headcount ("10", as at 12 Sep 2026). Nothing regenerates it or flags drift. Re-run `scripts/og-png.sh` (and LOOK at the PNG) when the identity count changes; or render it from the API.

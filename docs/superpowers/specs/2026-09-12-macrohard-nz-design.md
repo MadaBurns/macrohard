@@ -38,7 +38,10 @@ as Note 2.
   hash links to GitHub.
 - **Note 2 — Proposed restructuring.** "Staff your company": describe an org,
   get a costed agent org chart. Permalinks + copy-link.
-- **Note 3 — Subsequent events.** The free-domain offer and `hello@macrohard.nz`.
+- **Notes 3–8** (added 2026-09-12) — segment information, basis of preparation, related parties, key management
+  personnel, off-balance-sheet arrangements, principal risks. Every figure in them is a field `/api/receipts` already
+  returned; the copy is in `docs/superpowers/plans/2026-09-12-editorial-direction.md`.
+- **Note 9 — Subsequent events.** The free-domain offer and `hello@macrohard.nz`.
 - Footer carries the non-affiliation line.
 
 ### Copy decisions

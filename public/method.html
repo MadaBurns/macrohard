@@ -22,6 +22,7 @@
 			<a class="wordmark" href="/">Macrohard</a>
 			<nav class="topnav" aria-label="Primary">
 				<a href="/#ledger">Receipts</a>
+				<a href="/#segments">Notes</a>
 				<a href="/#staff">Staff your company</a>
 				<a href="/#contact">Contact</a>
 			</nav>
@@ -79,6 +80,10 @@
 				One. One human has committed to these repositories in the window. That person holds the deploy keys and runs every production deploy
 				by hand; the agents open the release and do not press the button.
 			</p>
+			<p>
+				Pull requests are opened by agents running under the operator's account, so GitHub attributes them to the human. That one you cannot
+				check from the outside, and we do not count it.
+			</p>
 
 			<h2 id="pulls">Pull requests merged</h2>
 			<p>Closed pull requests with a non-null <code>merged_at</code> inside the window.</p>
@@ -105,9 +110,9 @@
 
 			<h2 id="notes">Notes without figures</h2>
 			<p>
-				Notes 4, 7 and 8 contain no numbers. They describe the rule and its consequences, and the rule is in <code>src/receipts.ts</code>.
-				Note 5 uses this repository's own row from Note 3. Note 6 lists the identities counted under Headcount, agent, exactly as they
-				signed.
+				Notes 4, 7 and 8 contain no figures from the API. They describe the rule and its consequences, and the rule is in
+				<code>src/receipts.ts</code>. Note 5 uses this repository's own row from Note 3. Note 6 lists the identities counted under
+				Headcount, agent, exactly as they signed.
 			</p>
 
 			<h2 id="staff">Staff your company</h2>

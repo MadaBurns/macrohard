@@ -29,6 +29,8 @@
 	}
 
 	const fmtShare = (agent, total) => (total ? `${Math.round((agent / total) * 1000) / 10}%` : '—');
+	const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+	const fmtSmall = (n) => (n >= 0 && n < WORDS.length ? WORDS[n] : fmtInt(n));
 
 	// ---------------------------------------------------------------------
 	// Receipts
@@ -132,7 +134,7 @@
 				? 'All of them.'
 				: rest === 1
 					? 'The one that does not is a merge, performed by the human.'
-					: `The ${fmtInt(rest)} that do not are merges, performed by the human.`;
+					: `The ${fmtSmall(rest)} that do not are merges, performed by the human.`;
 	}
 
 	function renderIdentities(d) {

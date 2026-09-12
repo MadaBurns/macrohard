@@ -80,7 +80,7 @@ describe('static routes through the Worker (run_worker_first)', () => {
 	});
 
 	it('carries Notes 3 to 7 with their live hooks', async () => {
-		const html = await (await SELF.fetch(`${ORIGIN}/`)).text();
+		const html = flat(await (await SELF.fetch(`${ORIGIN}/`)).text());
 		for (const s of [
 			'Note 3 — Segment information',
 			'Note 4 — Basis of preparation',
@@ -98,7 +98,7 @@ describe('static routes through the Worker (run_worker_first)', () => {
 	});
 
 	it('has principal risks, a cautionary statement, and subsequent events as Note 9', async () => {
-		const html = await (await SELF.fetch(`${ORIGIN}/`)).text();
+		const html = flat(await (await SELF.fetch(`${ORIGIN}/`)).text());
 		expect(html).toContain('Note 8 — Principal risks and uncertainties');
 		expect(html).toContain('Note 9 — Subsequent events');
 		expect(html).not.toContain('Note 3 — Subsequent events');

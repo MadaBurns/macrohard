@@ -737,7 +737,8 @@ h2 {
 	margin-bottom: 6px;
 }
 .risk-list b::before {
-	content: attr(data-n) '  ';
+	content: attr(data-n);
+	margin-right: 10px;
 	font-family: var(--mono);
 	font-weight: 400;
 	color: var(--accent);
@@ -876,5 +877,8 @@ h2 {
 	}
 	.stat:last-child {
 		border-bottom: 0;
+	}
+	.nnote .kmp {
+		columns: 1;
 	}
 }
