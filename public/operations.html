@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Operations — Macrohard</title>
+		<meta
+			name="description"
+			content="The ten gates between a visitor's sentence and a permalink on macrohard.nz, and what each one hands you instead of an error."
+		/>
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="canonical" href="https://macrohard.nz/operations" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+		/>
+		<link rel="stylesheet" href="/styles.css" />
+	</head>
+	<body>
+		<header class="top">
+			<a class="wordmark" href="/">Macrohard</a>
+			<nav class="topnav" aria-label="Primary">
+				<a href="/#ledger">Receipts</a>
+				<a href="/#segments">Notes</a>
+				<a href="/#staff">Staff your company</a>
+				<a href="/#contact">Contact</a>
+			</nav>
+		</header>
+
+		<main class="prose">
+			<p class="eyebrow">Operations — the restructuring desk</p>
+			<h1>Ten gates. None of them can hand you an error.</h1>
+			<p>
+				Spend is the design constraint here, and the desk is the only part of the company that can spend money. What follows is the whole
+				path a request takes, in order. Each gate either refuses you in one sentence, or gives you something readable and says what it is.
+			</p>
+		</main>
+
+		<section class="notes-wrap" aria-label="The ten gates">
+			<div class="panel">
+				<div class="gate-row ledger-head"><span></span><span>Gate</span><span></span><span>If it does not pass</span></div>
+
+				<div class="gate-row">
+					<span class="gate-n">01</span>
+					<span><b>Shape</b> <span class="dim">· 3–200 characters, no links</span></span>
+					<span class="tag tag-refuse">Refuse</span>
+					<span>“Words, not links.”</span>
+				</div>
+				<div class="gate-row">
+					<span class="gate-n">02</span>
+					<span><b>Cache</b> <span class="dim">· 30 days, keyed on your sentence</span></span>
+					<span class="tag tag-skip">Skip</span>
+					<span>A hit skips all eight gates below.</span>
+				</div>
+				<div class="gate-row">
+					<span class="gate-n">03</span>
+					<span><b>Turnstile</b> <span class="dim">· off unless a secret is set</span></span>
+					<span class="tag tag-refuse">Refuse</span>
+					<span>“Please complete the check.”</span>
+				</div>
+				<div class="gate-row">
+					<span class="gate-n">04</span>
+					<span><b>Per-visitor rate</b> <span class="dim">· six a minute</span></span>
+					<span class="tag tag-refuse">Refuse</span>
+					<span>“Slow down — six a minute is plenty.”</span>
+				</div>
+				<div class="gate-row marked">
+					<span class="gate-n">05</span>
+					<span><b>Daily cap</b> <span class="dim">· a fixed number of model calls to the UTC day</span></span>
+					<span class="tag tag-degrade">Degrade</span>
+					<span>A standing proposal, labelled. Your text is not stored. Note 8.5.</span>
+				</div>
+				<div class="gate-row">
+					<span class="gate-n">06</span>
+					<span><b>Guard, inbound</b> <span class="dim">· reads your description</span></span>
+					<span class="tag tag-refuse">Refuse</span>
+					<span>“Not that one.”</span>
+				</div>
+				<div class="gate-row">
+					<span class="gate-n">07</span>
+					<span><b>Generate</b> <span class="dim">· strict schema, then scrubbed of anything link-shaped</span></span>
+					<span class="tag tag-degrade">Degrade</span>
+					<span>The closest standing proposal, under your own title.</span>
+				</div>
+				<div class="gate-row">
+					<span class="gate-n">08</span>
+					<span><b>Guard, outbound</b> <span class="dim">· reads the chart it produced, in context</span></span>
+					<span class="tag tag-degrade">Degrade</span>
+					<span>As above.</span>
+				</div>
+				<div class="gate-row marked">
+					<span class="gate-n">09</span>
+					<span><b>Permalink</b> <span class="dim">· needs both guard passes to have answered</span></span>
+					<span class="tag tag-degrade">Degrade</span>
+					<span>You get the chart, but no link. Nothing is stored, cached or counted.</span>
+				</div>
+				<div class="gate-row">
+					<span class="gate-n">10</span>
+					<span><b>Share card</b> <span class="dim">· one render per link, behind a lock</span></span>
+					<span class="tag tag-degrade">Degrade</span>
+					<span>The site's own card. The link still works, and always will.</span>
+				</div>
+			</div>
+		</section>
+
+		<main class="prose">
+			<h2>Why only one gate carries a figure</h2>
+			<p>
+				Gates 05 and 09 are the two that change what you are given without refusing you, and they are marked above. Only the cap keeps a
+				running count; the other nine are decided and forgotten inside a single request. Counting them would cost a write per request per
+				gate. Note 4 says an estimate is not a receipt, so the rest carry no number rather than a guessed one.
+			</p>
+
+			<h2>Where the numbers live</h2>
+			<p>
+				The exact ceilings are configuration, not copy, so this page does not restate them: it would be one more place for them to go stale.
+				They are in <code>wrangler.jsonc</code> in the public repository, beside the reasoning for each one, and the current day's spend
+				against the cap is reported live in the band at the top of the front page.
+			</p>
+
+			<p><a class="link-under" href="/method">How the figures are counted →</a></p>
+		</main>
+
+		<footer class="foot">
+			<div class="foot-l">
+				<div class="wordmark small">Macrohard</div>
+				<p class="foot-legal">
+					An independent parody and commentary project. Not affiliated with, endorsed by, or connected to Microsoft, xAI or Tesla. All trade
+					marks are the property of their respective owners.
+				</p>
+			</div>
+			<nav class="foot-nav" aria-label="Footer">
+				<a href="https://github.com/MadaBurns/macrohard">Source</a>
+				<a href="/method">Method</a>
+				<a href="mailto:hello@macrohard.nz">Contact</a>
+			</nav>
+		</footer>
+	</body>
+</html>

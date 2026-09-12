@@ -41,10 +41,19 @@
 			</nav>
 		</header>
 
+		<!-- Operating status. Hidden until there is something true to say. -->
+		<div class="live" id="live" hidden>
+			<div class="live-state">
+				<span class="live-dot" id="live-dot"></span>
+				<span class="live-label" id="live-label">Running</span>
+			</div>
+			<div class="live-facts" id="live-facts"></div>
+		</div>
+
 		<main>
 			<section class="hero">
 				<div class="hero-copy">
-					<p class="eyebrow">Annual Report — FY2026</p>
+					<p class="eyebrow">Annual Report — FY2026<span class="caret" aria-hidden="true"></span></p>
 					<h1>Headcount: <em>one</em>.</h1>
 					<p class="lede">
 						Macrohard is an engineering organisation run by AI agents. They write the code, sign for it, and open the release. The one human
@@ -67,11 +76,11 @@
 						</div>
 						<div>
 							<dt>Headcount, agent</dt>
-							<dd class="accent" data-r="agentIdentities">—</dd>
+							<dd><span class="delta" data-d="agentIdentities" hidden></span><span class="accent" data-r="agentIdentities">—</span></dd>
 						</div>
 						<div>
 							<dt>Share of commits by agents</dt>
-							<dd data-r="agentShare">—</dd>
+							<dd><span class="delta" data-d="agentShare" hidden></span><span data-r="agentShare">—</span></dd>
 						</div>
 					</dl>
 					<p class="panel-note">Live from the public GitHub API, last 90 days. <span data-r="asof"></span> <a href="/method">Method</a></p>
@@ -80,22 +89,22 @@
 
 			<section class="stats" aria-label="Key figures">
 				<div class="stat">
-					<div class="stat-n" data-r="agentCommits">—</div>
+					<div class="stat-n"><span data-r="agentCommits">—</span><span class="stat-d" data-d="agentCommits" hidden></span></div>
 					<div class="stat-l">Agent-authored commits</div>
 					<a class="stat-a" href="/method#commits">how counted →</a>
 				</div>
 				<div class="stat">
-					<div class="stat-n" data-r="prsMerged">—</div>
+					<div class="stat-n"><span data-r="prsMerged">—</span><span class="stat-d" data-d="prsMerged" hidden></span></div>
 					<div class="stat-l">Pull requests merged</div>
 					<a class="stat-a" href="/method#pulls">how counted →</a>
 				</div>
 				<div class="stat">
-					<div class="stat-n" data-r="medianPr">—</div>
+					<div class="stat-n"><span data-r="medianPr">—</span></div>
 					<div class="stat-l">Median PR open to merge</div>
 					<a class="stat-a" href="/method#median">how counted →</a>
 				</div>
 				<div class="stat">
-					<div class="stat-n">0</div>
+					<div class="stat-n"><span>0</span></div>
 					<div class="stat-l">Meetings held</div>
 					<span class="stat-a muted">not applicable</span>
 				</div>
@@ -298,6 +307,95 @@
 				</div>
 			</section>
 
+			<section id="operations" class="note">
+				<div class="note-head">
+					<div>
+						<p class="eyebrow">Note 10 — Operations</p>
+						<h2>The loop closes here.</h2>
+					</div>
+					<p class="note-aside">
+						Nothing is fetched when you load this page. It was counted half an hour ago, by the organisation it counts.
+					</p>
+				</div>
+
+				<div class="panel">
+					<h3 class="panel-h">The reporting cycle <span class="dim" data-r="cycleAge"></span></h3>
+
+					<div class="cycle">
+						<svg
+							viewBox="0 0 1260 300"
+							role="img"
+							aria-label="An agent signs a commit into one of four public repositories. Every thirty minutes the Worker reads the GitHub API, counts the commits carrying a Claude co-author trailer, writes one snapshot to KV, and serves this page. A dashed arrow returns from this page to the four repositories, because the repository that publishes the page is one of the four it counts. A human merges the pull requests and holds the deploy key."
+						>
+							<defs>
+								<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+									<path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
+								</marker>
+							</defs>
+
+							<rect x="216" y="0" width="180" height="52" fill="var(--band)" stroke="var(--ink)" />
+							<text x="232" y="23" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--ink)">HUMAN</text>
+							<text x="232" y="40" font-family="var(--sans)" font-size="12" fill="var(--body)">merges · holds the key</text>
+							<line x1="306" y1="56" x2="306" y2="94" stroke="var(--accent)" marker-end="url(#ar)" />
+
+							<rect x="0" y="100" width="180" height="62" fill="var(--card)" stroke="var(--rule)" />
+							<text x="16" y="125" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--ink)">AGENT</text>
+							<text x="16" y="145" font-family="var(--sans)" font-size="12" fill="var(--muted)">signs a commit</text>
+
+							<rect x="216" y="100" width="180" height="62" fill="var(--card)" stroke="var(--rule)" />
+							<text x="232" y="125" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--ink)">FOUR REPOS</text>
+							<text x="232" y="145" font-family="var(--sans)" font-size="12" fill="var(--muted)">public, on GitHub</text>
+
+							<rect x="432" y="100" width="180" height="62" fill="var(--card)" stroke="var(--rule)" />
+							<text x="448" y="125" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--ink)">READ</text>
+							<text x="448" y="145" font-family="var(--sans)" font-size="12" fill="var(--muted)">every 30 minutes</text>
+
+							<rect x="648" y="100" width="180" height="62" fill="var(--card)" stroke="var(--rule)" />
+							<text x="664" y="125" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--ink)">COUNT</text>
+							<text x="664" y="145" font-family="var(--sans)" font-size="12" fill="var(--muted)">trailer, or no trailer</text>
+
+							<rect x="864" y="100" width="180" height="62" fill="var(--card)" stroke="var(--rule)" />
+							<text x="880" y="125" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--ink)">SNAPSHOT</text>
+							<text x="880" y="145" font-family="var(--sans)" font-size="12" fill="var(--muted)">one key in KV</text>
+
+							<rect x="1080" y="100" width="180" height="62" fill="var(--ink)" stroke="var(--ink)" />
+							<text x="1096" y="125" font-family="var(--mono)" font-size="11" letter-spacing="1.5" fill="var(--paper)">THIS PAGE</text>
+							<text x="1096" y="145" font-family="var(--sans)" font-size="12" fill="#b8afa2">the figures above</text>
+
+							<line x1="184" y1="131" x2="208" y2="131" stroke="var(--accent)" marker-end="url(#ar)" />
+							<line x1="400" y1="131" x2="424" y2="131" stroke="var(--accent)" marker-end="url(#ar)" />
+							<line x1="616" y1="131" x2="640" y2="131" stroke="var(--accent)" marker-end="url(#ar)" />
+							<line x1="832" y1="131" x2="856" y2="131" stroke="var(--accent)" marker-end="url(#ar)" />
+							<line x1="1048" y1="131" x2="1072" y2="131" stroke="var(--accent)" marker-end="url(#ar)" />
+
+							<path
+								d="M 1170 166 L 1170 240 L 306 240 L 306 170"
+								fill="none"
+								stroke="var(--accent)"
+								stroke-dasharray="4 4"
+								marker-end="url(#ar)"
+							/>
+							<text x="738" y="264" text-anchor="middle" font-family="var(--sans)" font-size="13" fill="var(--accent)">
+								macrohard — the repository that publishes this page — is one of the four it counts. Note 5.
+							</text>
+						</svg>
+					</div>
+
+					<div class="run-strip">
+						<div><span class="run-l">Last run</span><span class="run-v" data-r="runAt">—</span></div>
+						<div><span class="run-l">Repositories</span><span class="run-v" data-r="runRepos">—</span></div>
+						<div><span class="run-l">Window</span><span class="run-v" data-r="runWindow">—</span></div>
+						<div><span class="run-l">Commits counted</span><span class="run-v" data-r="runCommits">—</span></div>
+						<div><span class="run-l">Next run</span><span class="run-v" data-r="runNext">—</span></div>
+					</div>
+
+					<div class="ledger-foot">
+						A run that counts no commits is discarded and the previous snapshot stands, so the figures do not move.
+						<a href="/operations">The ten gates the restructuring desk passes through →</a>
+					</div>
+				</div>
+			</section>
+
 			<section class="caution" aria-label="Forward-looking statements">
 				<p class="eyebrow">Forward-looking statements</p>
 				<p>
@@ -326,7 +424,9 @@
 		<template id="tpl-ledger-row">
 			<div class="ledger-row">
 				<a class="mono accent" data-f="sha" href="#" rel="noopener"></a>
-				<span class="ledger-msg" data-f="message"></span>
+				<span class="ledger-msg"
+					><span class="fresh-tag" data-f="tag" hidden>New</span><span class="ledger-text" data-f="message"></span
+				></span>
 				<span class="dim" data-f="repo"></span>
 				<span class="dim small" data-f="agent"></span>
 				<span class="mono dim r" data-f="when"></span>

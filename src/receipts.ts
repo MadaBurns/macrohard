@@ -57,6 +57,12 @@ export interface Receipts {
 	medianPrHours: number | null;
 	ledger: LedgerRow[];
 	repos: RepoSummary[];
+	/**
+	 * Whether GitHub refused the token on the refresh that produced this snapshot.
+	 * It rides here rather than on an endpoint of its own because it is a property
+	 * of the read, not of the moment you ask — and the page already has this.
+	 */
+	tokenRejected: boolean;
 	method: { agentRule: string; source: string };
 }
 
@@ -158,6 +164,8 @@ export function aggregate(inputs: RepoInput[], now: Date, windowDays: number): R
 		medianPrHours: med === null ? null : round1(med),
 		ledger: ledger.slice(0, LEDGER_ROWS),
 		repos,
+		// aggregate() only sees what was fetched, never how. refreshReceipts overwrites this.
+		tokenRejected: false,
 		method: {
 			agentRule: 'A commit is agent-authored when its message carries a "Co-Authored-By: Claude …" trailer.',
 			source: 'GitHub REST API: /repos/{owner}/{repo}/commits?since=… and /repos/{owner}/{repo}/pulls?state=closed',
@@ -276,7 +284,7 @@ export async function refreshReceipts(kv: KVNamespace, opts: RefreshOpts): Promi
 	// One state across the whole refresh: a rejected token is disabled once, not per repo.
 	const state: TokenState = { rejected: false };
 	const inputs = await Promise.all(opts.repos.map((r) => fetchRepo(fetcher, opts.owner, r, since, opts.token, state)));
-	const receipts = aggregate(inputs, now, opts.windowDays);
+	const receipts = { ...aggregate(inputs, now, opts.windowDays), tokenRejected: state.rejected };
 	// A snapshot that shows zeros is worse than a stale one: keep it if nothing was counted.
 	if (receipts.totalCommits === 0) {
 		const prev = await kv.get<Receipts>(RECEIPTS_KEY, 'json');

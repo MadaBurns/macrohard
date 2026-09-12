@@ -9,6 +9,10 @@
 	--hair: #ece5d9;
 	--accent: #9c4a1a;
 	--accent-dark: #6f330f;
+	/* The accent at low alpha over the card — a freshly-arrived ledger row. The
+	   literal is the fallback; browsers that parse color-mix take the second. */
+	--fresh: #fdf6ee;
+	--fresh: color-mix(in srgb, var(--accent) 4%, var(--card));
 	--serif: Newsreader, Georgia, 'Times New Roman', serif;
 	--sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
 	--mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -117,6 +121,74 @@ button {
 }
 .topnav a:hover {
 	color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------------
+   Live band — the only thing on the page that reports the machine rather than
+   the company. Every signal is the existing accent: a degraded state empties
+   the dot rather than recolouring it. The page reports; it does not alarm.
+   --------------------------------------------------------------------------- */
+.live {
+	position: relative;
+	border-bottom: 1px solid var(--rule);
+	background: var(--band);
+	padding: 0 var(--gutter);
+	min-height: 46px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 40px;
+	font-family: var(--mono);
+	font-size: 12px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+.live[hidden] {
+	display: none;
+}
+.live-state {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	white-space: nowrap;
+}
+.live-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--accent);
+	flex: none;
+}
+/* Spent, or unauthenticated: hollow, and still. */
+.live-dot.hollow {
+	background: transparent;
+	border: 1px solid var(--accent);
+}
+.live-dot.lapsed {
+	background: transparent;
+	border: 1px solid var(--muted);
+}
+.live-label {
+	color: var(--ink);
+	letter-spacing: 0.18em;
+}
+.live-facts {
+	display: flex;
+	align-items: center;
+	gap: 34px;
+	flex-wrap: wrap;
+}
+.live-facts b {
+	font-weight: 400;
+	color: var(--ink);
+	font-variant-numeric: tabular-nums;
+}
+.live-sep {
+	color: var(--rule);
+}
+.live-warn {
+	color: var(--accent);
 }
 
 /* Type */
@@ -257,9 +329,13 @@ h2 {
 	color: var(--body);
 }
 .glance-list dd {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
 	font-family: var(--mono);
 	font-size: 30px;
 	letter-spacing: -0.02em;
+	font-variant-numeric: tabular-nums;
 }
 .panel-note {
 	padding: 14px 26px;
@@ -292,10 +368,14 @@ h2 {
 	border-right: 0;
 }
 .stat-n {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
 	font-family: var(--mono);
 	font-size: clamp(34px, 3.2vw, 44px);
 	letter-spacing: -0.03em;
 	line-height: 1;
+	font-variant-numeric: tabular-nums;
 }
 .stat-l {
 	font-size: 12px;
@@ -630,6 +710,198 @@ h2 {
 	display: none;
 }
 
+/* ---------------------------------------------------------------------------
+   Change markers. A figure only wears one when it actually moved, and it wears
+   it until the next snapshot replaces or clears it — not for a fixed few
+   seconds, which nobody is reliably looking at.
+   --------------------------------------------------------------------------- */
+.delta {
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.08em;
+	color: var(--accent);
+	border: 1px solid var(--rule);
+	padding: 2px 6px;
+}
+.stat-d {
+	font-family: var(--mono);
+	font-size: 13px;
+	letter-spacing: 0.08em;
+	color: var(--accent);
+}
+.caret {
+	display: inline-block;
+	width: 7px;
+	height: 13px;
+	background: currentColor;
+	margin-left: 6px;
+	vertical-align: -1px;
+}
+
+/* A row that arrived while you were reading. The rule and the tag stay for the
+   visit; only the tint is a flourish, and it fades. */
+.ledger-row.fresh {
+	box-shadow: inset 2px 0 0 var(--accent);
+}
+.ledger-row.tint {
+	background: var(--fresh);
+}
+.ledger-msg {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+.ledger-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.fresh-tag {
+	flex: none;
+	font-family: var(--mono);
+	font-size: 10px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--accent);
+	border: 1px solid var(--accent);
+	padding: 1px 5px;
+}
+.fresh-tag[hidden] {
+	display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.live-dot.beat {
+		animation: beat 3s ease-in-out infinite;
+	}
+	.caret {
+		animation: blink 1.1s step-end infinite;
+	}
+	.ledger-row.tint {
+		transition: background 600ms ease-out;
+	}
+	.ledger-row.arriving {
+		overflow: hidden;
+		animation: rowin 600ms ease-out;
+	}
+}
+@keyframes beat {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.45;
+	}
+}
+@keyframes blink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0;
+	}
+}
+@keyframes rowin {
+	from {
+		max-height: 0;
+		opacity: 0;
+		padding-top: 0;
+		padding-bottom: 0;
+	}
+	to {
+		max-height: 120px;
+		opacity: 1;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Note 10 — the reporting cycle, and the operations page.
+   --------------------------------------------------------------------------- */
+.cycle {
+	overflow-x: auto;
+	padding: 30px 26px 26px;
+}
+.cycle svg {
+	display: block;
+	width: 1260px;
+	max-width: none;
+	height: auto;
+}
+.run-strip {
+	border-top: 1px solid var(--rule);
+	background: var(--band);
+	padding: 20px 26px;
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 24px;
+}
+.run-strip > div {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.run-l {
+	font-family: var(--mono);
+	font-size: 11px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+.run-v {
+	font-family: var(--mono);
+	font-size: 19px;
+	color: var(--ink);
+	font-variant-numeric: tabular-nums;
+}
+
+.gate-row {
+	padding: 14px 26px;
+	border-bottom: 1px solid var(--hair);
+	display: grid;
+	grid-template-columns: 36px minmax(0, 1fr) 84px minmax(0, 1fr);
+	gap: 20px;
+	align-items: center;
+	font-size: 14px;
+}
+.gate-row:last-child {
+	border-bottom: 0;
+}
+.gate-row.marked {
+	background: var(--fresh);
+}
+.gate-n {
+	font-family: var(--mono);
+	font-size: 13px;
+	color: var(--accent);
+}
+.gate-row b {
+	font-weight: 500;
+}
+.tag {
+	justify-self: start;
+	font-family: var(--mono);
+	font-size: 10px;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	padding: 2px 7px;
+	white-space: nowrap;
+}
+.tag-refuse {
+	color: var(--ink);
+	border: 1px solid var(--ink);
+}
+.tag-degrade {
+	color: var(--accent);
+	border: 1px solid var(--accent);
+}
+.tag-skip {
+	color: var(--muted);
+	border: 1px solid var(--rule);
+}
+
 /* 404 — auditor's report */
 .opinion {
 	border-left: 2px solid var(--ink);
@@ -781,6 +1053,20 @@ h2 {
 	.hero {
 		grid-template-columns: 1fr;
 	}
+	.run-strip {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.gate-row {
+		grid-template-columns: minmax(0, 1fr) 84px;
+		row-gap: 8px;
+	}
+	.gate-n {
+		display: none;
+	}
+	.gate-row > :last-child {
+		grid-column: 1 / -1;
+		color: var(--muted);
+	}
 	.stats {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
@@ -841,6 +1127,25 @@ h2 {
 	}
 	.topnav {
 		gap: 18px;
+	}
+	.live {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 5px;
+		padding-block: 11px;
+		font-size: 11px;
+		letter-spacing: 0.09em;
+	}
+	.live-facts {
+		gap: 9px;
+	}
+	.run-strip {
+		grid-template-columns: 1fr;
+		padding-inline: 16px;
+	}
+	.gate-row,
+	.cycle {
+		padding-inline: 16px;
 	}
 	.ledger-row {
 		grid-template-columns: 80px minmax(0, 1fr) 70px;

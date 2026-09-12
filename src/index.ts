@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { AppEnv } from './env';
 import { getReceipts, isStale, refreshReceipts, type Receipts } from './receipts';
 import { FALLBACK_ORGS, cacheKeyText, proposeOrg, validateQuery, type Org } from './staff';
-import { ID_RE, consumeDailyCap, newId, sha256Hex, verifyTurnstile } from './limits';
+import { GUARD_OUTAGE_KEY, GUARD_OUTAGE_TTL, ID_RE, consumeDailyCap, newId, readDailyCap, sha256Hex, verifyTurnstile } from './limits';
 import { ogCardHtml, renderOgPng, shareDescription, shareText, shareTitle } from './og';
 
 type Bindings = AppEnv;
@@ -128,6 +128,21 @@ app.get('/api/config', (c) =>
 	),
 );
 
+/**
+ * What the company is doing right now, for the band under the header.
+ *
+ * Deliberately only the two things the Worker actually knows without being
+ * asked to guess: the day's spend against its ceiling, and whether the guard
+ * answered last time it was asked. Everything else the band shows — the age of
+ * the figures, the next refresh, whether the token still authenticates — rides
+ * on /api/receipts, which the page already fetches.
+ */
+app.get('/api/live', async (c) => {
+	const desk = await readDailyCap(c.env.KV, new Date(), Number(c.env.STAFF_DAILY_CAP) || 0);
+	const guard = (await c.env.KV.get(GUARD_OUTAGE_KEY)) ? 'degraded' : 'ok';
+	return c.json({ desk: { used: desk.used, cap: desk.cap }, guard }, 200, { 'cache-control': 'public, max-age=30' });
+});
+
 app.get('/api/stats', async (c) => {
 	const restructured = Number((await c.env.KV.get(COUNT_KEY)) ?? '0') || 0;
 	return c.json({ restructured }, 200, { 'cache-control': 'public, max-age=30' });
@@ -207,7 +222,12 @@ app.post('/api/staff', async (c) => {
 	// share image. Without this, "nothing reaches a public permalink unmoderated"
 	// would be false at exactly the moment the guard cannot say. The client already
 	// hides the share actions when there is no id.
-	if (!moderated) return c.json({ id: null, org, mode, moderated, cached: false, share: shareText(org) });
+	if (!moderated) {
+		// The one place that learns the guard is unreachable. Recorded so the band
+		// can say so; it does not change what this visitor is served.
+		c.executionCtx.waitUntil(c.env.KV.put(GUARD_OUTAGE_KEY, '1', { expirationTtl: GUARD_OUTAGE_TTL }));
+		return c.json({ id: null, org, mode, moderated, cached: false, share: shareText(org) });
+	}
 
 	const id = newId();
 	const stored: StoredOrg = { id, query: storedQuery, org, mode, createdAt: now.toISOString() };

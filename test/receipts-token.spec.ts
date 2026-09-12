@@ -70,6 +70,23 @@ describe('token handling', () => {
 		expect((await env.KV.get<Receipts>(RECEIPTS_KEY, 'json'))?.agentCommits).toBe(3);
 	});
 
+	it('records on the snapshot whether the token was still authenticating', async () => {
+		await env.KV.delete(RECEIPTS_KEY);
+		const good: Fetcher = async (url) => json(url.includes('/commits') ? commitsFixture : pullsFixture);
+		const clean = await refreshReceipts(env.KV, { owner: 'o', repos: ['r'], windowDays: 90, token: 'good', now: NOW, fetcher: good });
+		expect(clean.tokenRejected).toBe(false);
+
+		const rejecting: Fetcher = async (url, init) => {
+			const h = (init?.headers ?? {}) as Record<string, string>;
+			if (h.authorization) return new Response('Bad credentials', { status: 401 });
+			return json(url.includes('/commits') ? commitsFixture : pullsFixture);
+		};
+		const lapsed = await refreshReceipts(env.KV, { owner: 'o', repos: ['r'], windowDays: 90, token: 'bad', now: NOW, fetcher: rejecting });
+		expect(lapsed.tokenRejected).toBe(true);
+		// The page reads it off the stored snapshot, not off a second endpoint.
+		expect((await env.KV.get<Receipts>(RECEIPTS_KEY, 'json'))?.tokenRejected).toBe(true);
+	});
+
 	it('still throws on a non-401 failure so the previous snapshot is kept', async () => {
 		const fetcher: Fetcher = async () => new Response('rate limited', { status: 403 });
 		await expect(fetchRepo(fetcher, 'o', 'r', NOW, 'tok')).rejects.toThrow(/GitHub 403/);
