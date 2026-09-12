@@ -3,6 +3,8 @@ import { SELF } from 'cloudflare:test';
 
 const ORIGIN = 'https://macrohard.nz';
 
+const flat = (s: string) => s.replace(/\s+/g, ' ');
+
 describe('static routes through the Worker (run_worker_first)', () => {
 	it('serves the front page', async () => {
 		const res = await SELF.fetch(`${ORIGIN}/`);
@@ -33,5 +35,14 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		const res = await SELF.fetch('https://www.macrohard.nz/method', { redirect: 'manual' });
 		expect(res.status).toBe(301);
 		expect(res.headers.get('location')).toBe('https://macrohard.nz/method');
+	});
+
+	it('hero claims only what the receipts support', async () => {
+		const html = flat(await (await SELF.fetch(`${ORIGIN}/`)).text());
+		expect(html).toContain('Headcount: <em>one</em>.');
+		expect(html).not.toContain('review each other');
+		expect(html).not.toContain('mostly watches');
+		expect(html).not.toContain('Every figure on this page links to the public commit');
+		expect(html).toContain('every line of the ledger links to the commit that proves it');
 	});
 });
