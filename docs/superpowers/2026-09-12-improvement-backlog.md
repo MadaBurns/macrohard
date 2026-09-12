@@ -240,3 +240,7 @@ Do, in this order, one PR:
 
 Run the baseline chain from a cold start (rm -f worker-configuration.d.ts first), paste the tails. Branch improve/test-runtime-currency; one PR to main titled "Tests: vitest 5, pool-workers 0.22, current runtime, AI binding stubbed". Append a dated Done line to docs/superpowers/2026-09-12-improvement-backlog.md. Do not merge.
 ```
+
+## 5. Done
+
+- 2026-09-12 — T1, T2 (copy branch), T4 (drop branch), T5, T6, T9 — editorial PR https://github.com/MadaBurns/macrohard/pull/8. Verification: `test/assets.spec.ts` asserts each corrected sentence.

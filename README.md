@@ -2,8 +2,8 @@
 
 **The software company that runs itself.** An annual report for an engineering
 organisation operated by AI agents — with receipts. Every figure on the front
-page is computed from the public GitHub API and links to the commit that proves
-it. The method is on the site: <https://macrohard.nz/method>.
+page is computed from the public GitHub API, and every line of the ledger links
+to the commit that proves it. The method is on the site: <https://macrohard.nz/method>.
 
 Independent parody and commentary. Not affiliated with Microsoft, xAI or Tesla.
 The domain is xAI's for the asking — free, no conditions. `hello@macrohard.nz`.
