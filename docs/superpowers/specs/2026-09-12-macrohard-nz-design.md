@@ -125,8 +125,11 @@ Turnstile), nosniff, referrer policy, `frame-ancestors 'none'`.
 
 ### Tests
 
-Vitest in `@cloudflare/vitest-pool-workers`, hermetic: `fetchMock` with
-`disableNetConnect`, fakes injected for GitHub and the AI binding. 41 tests:
+Vitest in `@cloudflare/vitest-pool-workers`, hermetic by construction:
+`test/setup.ts` applies `fetchMock` + `disableNetConnect` to every spec file, and
+`test/hermetic.spec.ts` fails if that stops happening. Fakes are injected for
+GitHub and the AI binding — never `env.AI`, which reaches the real, billed
+binding. `npm test` is the count; the cases are:
 trailer rule, aggregation from fixtures, pagination, stale/zero posture, schema
 and scrub, fallback selection, JSON extraction, cap/ids/turnstile, and the routes
 (warming 202, stale flag, input rejection, cache hit, permalink 404/hit, www
