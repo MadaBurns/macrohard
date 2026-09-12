@@ -56,4 +56,16 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(html).not.toContain("staff's morale");
 		expect(html).toContain('They were produced by a language model from your description.');
 	});
+
+	it('method page states only provable scope and headcount', async () => {
+		const html = flat(await (await SELF.fetch(`${ORIGIN}/method`)).text());
+		expect(html).toContain('Four public repositories');
+		expect(html).not.toContain('Three public repositories');
+		expect(html).not.toContain('one human maintainer with commit access');
+		expect(html).toContain('One human has committed to these repositories in the window');
+		expect(html).not.toContain('counted as human');
+		expect(html).toContain('counted as not agent-authored');
+		expect(html).toContain('id="segments"');
+		expect(html).toContain('id="notes"');
+	});
 });

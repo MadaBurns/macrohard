@@ -37,7 +37,10 @@
 			</p>
 
 			<h2 id="scope">Scope</h2>
-			<p>Three public repositories, last 90 days, refreshed every 30 minutes:</p>
+			<p>
+				Four public repositories, last 90 days. The snapshot is refreshed every 30 minutes by schedule, and again on the first visit after
+				it is 45 minutes old:
+			</p>
 			<ul>
 				<li>
 					<a href="https://github.com/MadaBurns/bv-mcp" rel="noopener">MadaBurns/bv-mcp</a> — a DNS and email security scanner exposed as an
@@ -56,7 +59,7 @@
 			<p>
 				A commit counts as agent-authored when its message carries a <code>Co-Authored-By: Claude …</code> trailer, matched
 				case-insensitively at the start of a line. Nothing is inferred from the author name, the commit style, or the file touched. A commit
-				without the trailer is counted as human even if an agent helped.
+				without the trailer is counted as not agent-authored, even if an agent helped and even if a bot made it.
 			</p>
 			<p>
 				Call: <code>GET /repos/{owner}/{repo}/commits?since={now − 90d}&amp;per_page=100</code>, following <code>Link: rel="next"</code>.
@@ -73,9 +76,8 @@
 
 			<h2 id="human">Headcount, human</h2>
 			<p>
-				One. The repositories have one human maintainer with commit access. That person holds the deploy keys and runs production deploys by
-				hand — the agents open the release; they do not press the button. We say so on the front page because the alternative would be a lie
-				that a sceptic could disprove in one <code>git log</code>.
+				One. One human has committed to these repositories in the window. That person holds the deploy keys and runs every production deploy
+				by hand; the agents open the release and do not press the button.
 			</p>
 
 			<h2 id="pulls">Pull requests merged</h2>
@@ -91,8 +93,22 @@
 				branch does not move it.
 			</p>
 
+			<h2 id="segments">Segment information</h2>
+			<p>
+				Note 3 shows the same counts per repository. They come from the same two calls, grouped by repository before summing. The share
+				column is agent-authored commits divided by all commits in that repository, to one decimal place, computed in your browser from the
+				published figures. A repository with two commits is shown; the rule has no minimum.
+			</p>
+
 			<h2 id="meetings">Meetings held</h2>
 			<p>Zero. This one is not from the API. It is, however, true.</p>
+
+			<h2 id="notes">Notes without figures</h2>
+			<p>
+				Notes 4, 7 and 8 contain no numbers. They describe the rule and its consequences, and the rule is in <code>src/receipts.ts</code>.
+				Note 5 uses this repository's own row from Note 3. Note 6 lists the identities counted under Headcount, agent, exactly as they
+				signed.
+			</p>
 
 			<h2 id="staff">Staff your company</h2>
 			<p>
