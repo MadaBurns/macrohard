@@ -1,0 +1,16 @@
+name: Repo Hygiene
+
+# Thin consumer of the fleet's shared hygiene workflow, matching the stubs in
+# blackveil-dns-action and bv-claude-dns. The checks themselves (tracked
+# symlinks, generated/compiled files, .gitignore essentials, large files) live
+# in bv-mcp so all four public repos move together.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  hygiene:
+    uses: MadaBurns/bv-mcp/.github/workflows/repo-hygiene.yml@main
