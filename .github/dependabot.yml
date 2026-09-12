@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Minor and patch arrive as one grouped PR; majors come separately, because a
+  # major here means a test-runtime or schema-validator migration that wants reading.
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: monthly

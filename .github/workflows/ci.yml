@@ -1,0 +1,31 @@
+name: CI
+
+# The baseline the repo is expected to hold: binding types generate, types check,
+# the hermetic suite passes, formatting is clean. No deploy step and no secrets —
+# production is operator-run by design, and nothing here needs Cloudflare credentials.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      # `pretypecheck` runs `wrangler types` first: worker-configuration.d.ts is
+      # generated and gitignored, so a clean checkout has no binding types yet.
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run format:check

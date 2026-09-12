@@ -6,8 +6,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "wrangler dev",
+		"predeploy": "npm run typecheck && npm test",
 		"deploy": "wrangler deploy",
 		"test": "vitest run",
+		"pretypecheck": "wrangler types",
 		"typecheck": "tsc --noEmit",
 		"types": "wrangler types",
 		"format": "prettier --write .",

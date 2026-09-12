@@ -52,10 +52,15 @@ Nothing is inferred from author names. See `parseAgentTrailers` in
 ```bash
 npm ci
 npm test            # vitest, inside the Workers runtime, hermetic
-npm run typecheck
+npm run typecheck   # generates worker-configuration.d.ts first (wrangler types)
 npm run dev         # wrangler dev — note Workers AI always runs remotely and bills
 npm run deploy      # operator-run; custom domains + cron are in wrangler.jsonc
 ```
+
+`typecheck` generates the binding types before it runs, so it works on a fresh
+clone. `deploy` runs typecheck and the tests first and refuses if either is red —
+the operator still presses the button, it just cannot be pressed over a failing
+suite. The same four commands run in CI on every pull request.
 
 ## Licence
 
