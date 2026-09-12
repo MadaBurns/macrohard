@@ -1,0 +1,46 @@
+name: CI
+
+# The whole gate for this repo. Deploy stays operator-run (`npm run deploy`),
+# so this workflow needs no secrets and has no deploy step — it only proves the
+# baseline chain is green on a CLEAN clone, which is the thing that kept
+# breaking locally: `worker-configuration.d.ts` is generated and gitignored, so
+# `typecheck` passes on a developer machine that has run `wrangler types` and
+# fails on a fresh checkout. `pretypecheck` now regenerates it, and running here
+# is what proves that.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    name: typecheck · test · format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # `pretypecheck` runs `wrangler types` first, so this also proves the
+      # generated-types step works without credentials.
+      - run: npm run typecheck
+
+      # Hermetic by contract: no network, no remote bindings. If this ever needs
+      # a secret to pass, the test has stopped being hermetic — fix the test.
+      - run: npm test
+
+      - run: npm run format:check
