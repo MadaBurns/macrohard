@@ -611,6 +611,25 @@ h2 {
 	margin: 0;
 }
 
+.org-actions {
+	display: flex;
+	gap: 18px;
+	white-space: nowrap;
+}
+.org-actions a.link-btn:hover {
+	text-decoration: underline;
+}
+.counter {
+	display: block;
+	margin-top: 6px;
+	font-family: var(--mono);
+	font-size: 13px;
+	color: var(--muted);
+}
+.counter:empty {
+	display: none;
+}
+
 /* Responsive */
 @media (max-width: 1100px) {
 	.ledger-row {

@@ -17,6 +17,7 @@ export interface AppEnv {
 	KV: KVNamespace;
 	AI: AiLike;
 	STAFF_RL?: RateLimiterLike;
+	BROWSER?: Fetcher; // Browser Rendering; optional so tests and local dev run without it
 	GITHUB_OWNER: string;
 	GITHUB_REPOS: string;
 	RECEIPTS_WINDOW_DAYS: string;

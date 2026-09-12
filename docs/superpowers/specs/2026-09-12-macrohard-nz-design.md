@@ -123,8 +123,21 @@ and scrub, fallback selection, JSON extraction, cap/ids/turnstile, and the route
 (warming 202, stale flag, input rejection, cache hit, permalink 404/hit, www
 redirect, JSON 404s).
 
+### Sharing (added 2026-09-12, second pass)
+
+- `/s/:id` is server-personalised with HTMLRewriter: title, description,
+  `og:*`, canonical — a shared chart renders as its own card.
+- `/og/:id.png` is rendered once by Browser Rendering (`BROWSER` binding,
+  puppeteer, 1200×630 from `ogCardHtml`) and cached in KV for the permalink's
+  lifetime; pre-rendered in `waitUntil` at generation time so the response
+  never waits. Any failure — quota, plan, timeout — 302s to the generic card.
+- Every result carries pre-written share text (`shareText`) and the page
+  offers "Post on X" (intent link; nothing auto-posts) and "Copy link".
+- `/api/stats` exposes an "organisations restructured" KV counter.
+- The `macrohard` repo is in the receipts list: the site counts itself.
+
 ## Not built (deliberately)
 
 - Mobile-specific artboard — the CSS is responsive; no separate design.
-- Per-permalink OG image (generic card only).
 - Any sale mechanism for the domain. There will not be one.
+- Anything that posts on the operator's behalf, and anything astroturfed.

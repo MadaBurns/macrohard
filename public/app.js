@@ -167,11 +167,38 @@
 			showError(body.error || 'Something went wrong.');
 			return;
 		}
-		renderOrg(body.org, body.mode, body.id);
+		renderOrg(body.org, body.mode, body.id, body.share);
 		if (body.id) history.replaceState(null, '', `/s/${body.id}`);
+		if (body.mode === 'ai' && !body.cached) bumpCounter();
 	}
 
-	function renderOrg(org, mode, id) {
+	// ---------------------------------------------------------------------
+	// Counter
+	// ---------------------------------------------------------------------
+	let restructured = 0;
+
+	function showCounter() {
+		const el = r('restructured');
+		if (!el) return;
+		el.textContent = restructured > 0 ? `${fmtInt(restructured)} organisation${restructured === 1 ? '' : 's'} restructured to date.` : '';
+	}
+
+	async function loadStats() {
+		try {
+			const s = await (await fetch('/api/stats')).json();
+			restructured = Number(s.restructured) || 0;
+			showCounter();
+		} catch {
+			/* cosmetic */
+		}
+	}
+
+	function bumpCounter() {
+		restructured += 1;
+		showCounter();
+	}
+
+	function renderOrg(org, mode, id, share) {
 		const tpl = $('#tpl-org');
 		const node = tpl.content.firstElementChild.cloneNode(true);
 		$('[data-f="title"]', node).textContent = org.title;
@@ -195,7 +222,11 @@
 				'The model was unavailable or the day’s budget is spent, so this is one of our standing proposals. Figures are illustrative.';
 		}
 		const copy = $('[data-f="copy"]', node);
+		const post = $('[data-f="post"]', node);
 		if (id) {
+			const url = `${location.origin}/s/${id}`;
+			const text = share || `Macrohard restructured "${org.title}": ${org.agents} agents at USD ${fmtInt(org.runRateUsdPerDay)}/day.`;
+			post.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`${text}\n\n${url}`)}`;
 			copy.addEventListener('click', async () => {
 				try {
 					await navigator.clipboard.writeText(`${location.origin}/s/${id}`);
@@ -207,6 +238,7 @@
 			});
 		} else {
 			copy.remove();
+			post.remove();
 		}
 		out.replaceChildren(node);
 	}
@@ -234,7 +266,7 @@
 			const stored = await res.json();
 			input.value = stored.query;
 			setPressed(stored.query);
-			renderOrg(stored.org, stored.mode, stored.id);
+			renderOrg(stored.org, stored.mode, stored.id, stored.share);
 			$('#staff').scrollIntoView({ block: 'start' });
 		} catch {
 			/* leave the empty state */
@@ -243,5 +275,6 @@
 
 	loadReceipts();
 	loadConfig();
+	loadStats();
 	loadPermalink();
 })();
