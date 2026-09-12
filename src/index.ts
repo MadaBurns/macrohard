@@ -10,7 +10,11 @@ type Bindings = AppEnv;
 const app = new Hono<{ Bindings: Bindings }>();
 
 const RECEIPTS_MAX_AGE_MS = 45 * 60_000;
-const PERMALINK_TTL = 180 * 86_400;
+// A share image can expire: it re-renders from the stored org on a miss, bounded
+// by the per-id lock and the daily render budget. The permalink itself cannot —
+// someone posted that link, and a link that 404s is worse than one never shared.
+// At ~1 KB a stored org, KV storage was never the constraint here.
+const OG_TTL = 365 * 86_400;
 const COUNT_KEY = 'count:total';
 
 export interface StoredOrg {
@@ -63,7 +67,7 @@ async function prerenderOg(env: AppEnv, id: string, org: Org): Promise<Uint8Arra
 	await env.KV.put(lockKey, '1', { expirationTtl: 120 });
 	try {
 		const png = await renderOgPng(env.BROWSER, ogCardHtml(org));
-		await env.KV.put(`og:${id}`, png, { expirationTtl: PERMALINK_TTL });
+		await env.KV.put(`og:${id}`, png, { expirationTtl: OG_TTL });
 		return png;
 	} catch (err) {
 		console.error('og render failed', id, String(err));
@@ -207,7 +211,7 @@ app.post('/api/staff', async (c) => {
 
 	const id = newId();
 	const stored: StoredOrg = { id, query: storedQuery, org, mode, createdAt: now.toISOString() };
-	await c.env.KV.put(`s:${id}`, JSON.stringify(stored), { expirationTtl: PERMALINK_TTL });
+	await c.env.KV.put(`s:${id}`, JSON.stringify(stored));
 	// Only cache real generations; a fallback should get another go next time.
 	if (mode === 'ai') {
 		await c.env.KV.put(cacheKey, JSON.stringify(stored), { expirationTtl: 30 * 86_400 });
