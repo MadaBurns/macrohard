@@ -10,7 +10,7 @@ body {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
-	padding: 64px 72px;
+	padding: 60px 72px 56px;
 	box-sizing: border-box;
 }
 .top {
@@ -31,33 +31,54 @@ body {
 	text-transform: uppercase;
 	color: #9c4a1a;
 }
-h1 {
-	margin: 0;
-	font-family: Newsreader, Georgia, serif;
-	font-weight: 400;
-	font-size: 96px;
-	line-height: 0.98;
-	letter-spacing: -0.022em;
-	max-width: 1000px;
+.pair {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	border-top: 1px solid #16130f;
+	border-bottom: 1px solid #16130f;
 }
-h1 em {
-	font-style: italic;
+.pair div {
+	padding: 26px 0 22px;
+}
+.pair div + div {
+	border-left: 1px solid #16130f;
+	padding-left: 48px;
+}
+.pair b {
+	display: block;
+	font-family: 'IBM Plex Mono', monospace;
+	font-weight: 500;
+	font-size: 196px;
+	letter-spacing: -0.05em;
+	line-height: 0.9;
+}
+.pair b.acc {
+	color: #9c4a1a;
+}
+.pair span {
+	display: block;
+	margin-top: 16px;
+	font-size: 16px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #6b6459;
 }
 .bot {
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-end;
-	border-top: 1px solid #16130f;
-	padding-top: 22px;
 }
-.sub {
-	font-size: 22px;
-	color: #463f35;
-	max-width: 720px;
-	line-height: 1.4;
+.tag {
+	font-family: Newsreader, Georgia, serif;
+	font-size: 40px;
+	letter-spacing: -0.015em;
+	line-height: 1.1;
+}
+.tag em {
+	font-style: italic;
 }
 .url {
 	font-family: 'IBM Plex Mono', monospace;
-	font-size: 20px;
+	font-size: 18px;
 	color: #6b6459;
 }

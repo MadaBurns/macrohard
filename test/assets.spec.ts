@@ -105,4 +105,19 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(html).toContain('This report contains none.');
 		expect(html).toContain('data-n="8.7"');
 	});
+
+	it('generic share card is the headcount card and ships as a 1200x630 PNG', async () => {
+		const html = await (await SELF.fetch(`${ORIGIN}/og.html`)).text();
+		expect(html).toContain('Headcount, human');
+		expect(html).toContain('Headcount, agent');
+		expect(html).toContain('href="og.css"');
+		const png = await SELF.fetch(`${ORIGIN}/og.png`);
+		expect(png.status).toBe(200);
+		expect(png.headers.get('content-type')).toContain('image/png');
+		const bytes = new Uint8Array(await png.arrayBuffer());
+		// IHDR width/height are big-endian at bytes 16..23.
+		const dv = new DataView(bytes.buffer);
+		expect(dv.getUint32(16)).toBe(1200);
+		expect(dv.getUint32(20)).toBe(630);
+	});
 });
