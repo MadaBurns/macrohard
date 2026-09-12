@@ -5,6 +5,8 @@ import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
 export default defineWorkersConfig({
 	test: {
 		include: ['test/**/*.spec.ts'],
+		// Applies the outbound-network kill switch to every spec file; see test/setup.ts.
+		setupFiles: ['./test/setup.ts'],
 		poolOptions: {
 			workers: {
 				wrangler: { configPath: './wrangler.jsonc' },
