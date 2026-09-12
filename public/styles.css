@@ -706,6 +706,12 @@ h2 {
 	.ledger-row > :nth-child(4) {
 		display: none;
 	}
+	.seg-row {
+		grid-template-columns: minmax(0, 1fr) 110px 150px 90px 110px;
+	}
+	.seg-row > :nth-child(4) {
+		display: initial;
+	}
 }
 @media (max-width: 900px) {
 	.hero {
@@ -774,6 +780,9 @@ h2 {
 	}
 	.ledger-row > :nth-child(3) {
 		display: none;
+	}
+	.seg-row {
+		grid-template-columns: minmax(0, 1fr) 90px 90px;
 	}
 	.ledger-head,
 	.staff-form,
