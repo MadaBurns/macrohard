@@ -240,3 +240,9 @@ Do, in this order, one PR:
 
 Run the baseline chain from a cold start (rm -f worker-configuration.d.ts first), paste the tails. Branch improve/test-runtime-currency; one PR to main titled "Tests: vitest 5, pool-workers 0.22, current runtime, AI binding stubbed". Append a dated Done line to docs/superpowers/2026-09-12-improvement-backlog.md. Do not merge.
 ```
+
+## 5. Done
+
+Each line: date, item IDs, what shipped, the PR, and how it was verified. Written by the agent that shipped it, in merge order.
+
+- **2026-09-12 — E1, E3, E4, E5, E6 (#3, #4, #14).** CI runs the four baseline commands on every pull request and push to `main`; `pretypecheck` makes typecheck work on a clean clone; `predeploy` refuses a deploy over a red suite; the e2e ledger is Prettier-clean; Dependabot groups minor and patch weekly. [PR #2](https://github.com/MadaBurns/macrohard/pull/2). Verified cold: `rm -f worker-configuration.d.ts && npm ci && npm run typecheck && npm test && npm run format:check` → exit 0, 84 tests. **E2 (branch protection) remains OPERATOR and is the thing that gives this teeth.**
