@@ -308,3 +308,36 @@ export async function moderateOrg(ai: AiLike, query: string, org: Org): Promise<
 		return 'unknown';
 	}
 }
+
+// ---------------------------------------------------------------------------
+// The whole decision, in one testable place
+// ---------------------------------------------------------------------------
+
+export type Proposal = { outcome: 'rejected' } | { outcome: 'proposed'; org: Org; mode: 'ai' | 'fallback'; moderated: boolean };
+
+/**
+ * Moderate the query, generate, moderate the result — or fall back.
+ *
+ * `moderated` is true only when BOTH guard passes returned an explicit verdict.
+ * A guard outage reads as `unknown`, and `unknown` must not take the toy down,
+ * so the org is still proposed. It must not be persisted either: the caller
+ * stores nothing and mints no permalink unless `moderated` is true, which is
+ * what makes "nothing reaches a public permalink unmoderated" true even while
+ * the guard is down.
+ *
+ * A canned fallback is `moderated: true` because it is fixed text in this repo,
+ * not model output: there is nothing for a guard to have an opinion about.
+ */
+export async function proposeOrg(ai: AiLike, model: string, query: string): Promise<Proposal> {
+	const queryVerdict = await moderateQuery(ai, query);
+	if (queryVerdict === 'unsafe') return { outcome: 'rejected' };
+	try {
+		const org = await generateOrg(ai, model, query);
+		const orgVerdict = await moderateOrg(ai, query, org);
+		if (orgVerdict === 'unsafe') throw new Error('output flagged by guard');
+		return { outcome: 'proposed', org, mode: 'ai', moderated: queryVerdict === 'safe' && orgVerdict === 'safe' };
+	} catch (err) {
+		console.error('generateOrg failed', String(err));
+		return { outcome: 'proposed', org: pickFallback(query), mode: 'fallback', moderated: true };
+	}
+}

@@ -97,9 +97,12 @@ cron */30               refresh receipts snapshot
 - Moderation (added after the post-commit security pass): Llama Guard 3
   (`@cf/meta/llama-guard-3-8b`, ~9 neurons/call) on the query before
   generation — unsafe → 400 and nothing stored — and on the generated org
-  after — unsafe → canned fallback. A guard outage reads as "unknown" and
-  passes, so it cannot take the toy down. When the daily cap is spent the
-  visitor's text is not stored, so nothing unmoderated can reach a permalink.
+  after — unsafe → canned fallback. A guard outage reads as "unknown": the org
+  is still served, so an outage cannot take the toy down, but it is not stored,
+  cached, counted or permalinked, so the permalink promise holds while the
+  guard is down too (`proposeOrg` in `src/staff.ts` decides; the route
+  enforces). When the daily cap is spent the visitor's text is not stored
+  either, so nothing unmoderated can reach a permalink.
 - Fallback: five canned orgs keyed by keyword; served when the model fails or
   the cap trips; response carries `mode:"fallback"` and the UI says so. Fallbacks
   are not cached, so the next attempt tries the model again.

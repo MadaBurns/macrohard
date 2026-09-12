@@ -223,9 +223,10 @@
 			showError(body.error || 'Something went wrong.');
 			return;
 		}
-		renderOrg(body.org, body.mode, body.id, body.share);
+		renderOrg(body.org, body.mode, body.id, body.share, body.moderated);
 		if (body.id) history.replaceState(null, '', `/s/${body.id}`);
-		if (body.mode === 'ai' && !body.cached) bumpCounter();
+		// Not counted server-side when the guard could not answer, so do not count it here either.
+		if (body.mode === 'ai' && !body.cached && body.moderated !== false) bumpCounter();
 	}
 
 	// ---------------------------------------------------------------------
@@ -254,7 +255,7 @@
 		showCounter();
 	}
 
-	function renderOrg(org, mode, id, share) {
+	function renderOrg(org, mode, id, share, moderated) {
 		const tpl = $('#tpl-org');
 		const node = tpl.content.firstElementChild.cloneNode(true);
 		$('[data-f="title"]', node).textContent = org.title;
@@ -276,6 +277,10 @@
 			note.classList.add('fallback');
 			note.textContent =
 				'The model was unavailable or the day’s budget is spent, so this is one of our standing proposals. Figures are illustrative.';
+		} else if (moderated === false) {
+			const note = $('[data-f="note"]', node);
+			note.classList.add('fallback');
+			note.textContent = 'The safety check could not answer, so this one is yours only: it is not saved and has no link.';
 		}
 		const copy = $('[data-f="copy"]', node);
 		const post = $('[data-f="post"]', node);

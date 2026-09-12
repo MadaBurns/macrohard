@@ -38,7 +38,10 @@ Nothing is inferred from author names. See `parseAgentTrailers` in
 5. Llama Guard 3 on the query before generation (unsafe → 400, nothing
    stored) and on the generated org after it (unsafe → canned fallback).
    When the daily cap is spent, the visitor's text is not stored at all.
-   Nothing reaches a public permalink unmoderated.
+   If the guard itself cannot answer, the verdict is `unknown`: the visitor
+   still gets their org, because an outage must not take the toy down, but it
+   is not stored, cached, counted or given a permalink. Nothing reaches a
+   public permalink unmoderated — including while the guard is down.
 
 ### Optional secrets
 
