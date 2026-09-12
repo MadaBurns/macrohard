@@ -45,4 +45,15 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(html).not.toContain('Every figure on this page links to the public commit');
 		expect(html).toContain('every line of the ledger links to the commit that proves it');
 	});
+
+	it('the generator never convenes a board in a company with no meetings', async () => {
+		const js = await (await SELF.fetch(`${ORIGIN}/app.js`)).text();
+		expect(js).not.toContain('Convening the board');
+		expect(js).not.toContain('reconvene');
+		expect(js).not.toContain('That would be news');
+		expect(js).toContain('Costing the proposal');
+		const html = flat(await (await SELF.fetch(`${ORIGIN}/`)).text());
+		expect(html).not.toContain("staff's morale");
+		expect(html).toContain('They were produced by a language model from your description.');
+	});
 });

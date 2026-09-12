@@ -72,7 +72,7 @@
 			rows.appendChild(node);
 		}
 		if (!(d.ledger || []).length) {
-			rows.innerHTML = '<div class="ledger-empty">No agent-authored commits in the window. That would be news.</div>';
+			rows.innerHTML = '<div class="ledger-empty">No agent-authored commits in the window.</div>';
 		}
 		const more = Math.max(0, (d.agentCommits || 0) - (d.ledger || []).length);
 		const foot = r('ledgerMore');
@@ -128,7 +128,7 @@
 	function setBusy(on) {
 		go.disabled = on;
 		out.classList.toggle('busy', on);
-		if (on) out.innerHTML = '<div class="staff-empty">Convening the board…</div>';
+		if (on) out.innerHTML = '<div class="staff-empty">Costing the proposal…</div>';
 	}
 
 	function showError(msg) {
@@ -153,7 +153,7 @@
 			});
 		} catch {
 			setBusy(false);
-			out.innerHTML = '<div class="staff-empty">Network trouble. The board will reconvene.</div>';
+			out.innerHTML = '<div class="staff-empty">Network trouble. Try again.</div>';
 			return;
 		}
 		setBusy(false);
