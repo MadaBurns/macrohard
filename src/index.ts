@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { AppEnv } from './env';
 import { getReceipts, isStale, refreshReceipts, type Receipts } from './receipts';
-import { FALLBACK_ORGS, cacheKeyText, generateOrg, moderateOrg, moderateQuery, pickFallback, validateQuery, type Org } from './staff';
+import { FALLBACK_ORGS, cacheKeyText, proposeOrg, validateQuery, type Org } from './staff';
 import { ID_RE, consumeDailyCap, newId, sha256Hex, verifyTurnstile } from './limits';
 import { ogCardHtml, renderOgPng, shareDescription, shareText, shareTitle } from './og';
 
@@ -160,7 +160,9 @@ app.post('/api/staff', async (c) => {
 	// Cache first: repeats are free and skip every limiter.
 	const cacheKey = `org:${await sha256Hex(cacheKeyText(query))}`;
 	const cached = await c.env.KV.get<StoredOrg>(cacheKey, 'json');
-	if (cached) return c.json({ id: cached.id, org: cached.org, mode: cached.mode, cached: true, share: shareText(cached.org) });
+	// Only moderated generations are ever cached, so a cache hit is moderated by construction.
+	if (cached)
+		return c.json({ id: cached.id, org: cached.org, mode: cached.mode, moderated: true, cached: true, share: shareText(cached.org) });
 
 	if (c.env.TURNSTILE_SECRET) {
 		const token = typeof payload.turnstile === 'string' ? payload.turnstile : '';
@@ -180,6 +182,7 @@ app.post('/api/staff', async (c) => {
 
 	let org: Org;
 	let mode: StoredOrg['mode'] = 'ai';
+	let moderated = true;
 	let storedQuery = query;
 	if (!cap.allowed) {
 		// Budget spent: a standing proposal, and the visitor's text is not stored at all
@@ -188,16 +191,19 @@ app.post('/api/staff', async (c) => {
 		mode = 'fallback';
 		storedQuery = '';
 	} else {
-		if ((await moderateQuery(c.env.AI, query)) === 'unsafe') return c.json({ error: 'Not that one.' }, 400);
-		try {
-			org = await generateOrg(c.env.AI, c.env.AI_MODEL, query);
-			if ((await moderateOrg(c.env.AI, query, org)) === 'unsafe') throw new Error('output flagged by guard');
-		} catch (err) {
-			console.error('generateOrg failed', String(err));
-			org = pickFallback(query);
-			mode = 'fallback';
-		}
+		const proposal = await proposeOrg(c.env.AI, c.env.AI_MODEL, query);
+		if (proposal.outcome === 'rejected') return c.json({ error: 'Not that one.' }, 400);
+		org = proposal.org;
+		mode = proposal.mode;
+		moderated = proposal.moderated;
 	}
+
+	// A guard outage still gets an answer — an outage must not take the toy down —
+	// but never a permalink: nothing stored, nothing cached, nothing counted, no
+	// share image. Without this, "nothing reaches a public permalink unmoderated"
+	// would be false at exactly the moment the guard cannot say. The client already
+	// hides the share actions when there is no id.
+	if (!moderated) return c.json({ id: null, org, mode, moderated, cached: false, share: shareText(org) });
 
 	const id = newId();
 	const stored: StoredOrg = { id, query: storedQuery, org, mode, createdAt: now.toISOString() };
@@ -210,7 +216,7 @@ app.post('/api/staff', async (c) => {
 	// The share image renders in the background; the response never waits on it.
 	c.executionCtx.waitUntil(prerenderOg(c.env, id, org));
 
-	return c.json({ id, org, mode, cached: false, share: shareText(org) });
+	return c.json({ id, org, mode, moderated, cached: false, share: shareText(org) });
 });
 
 app.get('/api/s/:id', async (c) => {
