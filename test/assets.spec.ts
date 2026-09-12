@@ -68,4 +68,22 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(html).toContain('id="segments"');
 		expect(html).toContain('id="notes"');
 	});
+
+	it('carries Notes 3 to 7 with their live hooks', async () => {
+		const html = await (await SELF.fetch(`${ORIGIN}/`)).text();
+		for (const s of [
+			'Note 3 — Segment information',
+			'Note 4 — Basis of preparation',
+			'Note 5 — Related parties',
+			'Note 6 — Key management personnel',
+			'Note 7 — Off-balance-sheet arrangements',
+			'id="segment-rows"',
+			'id="tpl-segment-row"',
+			'data-self="macrohard"',
+			'id="kmp-list"',
+			'data-r="segShare"',
+		]) {
+			expect(html).toContain(s);
+		}
+	});
 });
