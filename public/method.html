@@ -63,8 +63,9 @@
 				without the trailer is counted as not agent-authored, even if an agent helped and even if a bot made it.
 			</p>
 			<p>
-				Call: <code>GET /repos/{owner}/{repo}/commits?since={now − 90d}&amp;per_page=100</code>, following <code>Link: rel="next"</code>.
-				The commit date is <code>commit.author.date</code>.
+				Call: <code>GET /repos/{owner}/{repo}/commits?since={now − 90d}&amp;per_page=100</code>, following <code>Link: rel="next"</code>
+				up to a fixed number of pages. A repository that exceeds it is counted to that ceiling and the front page says which, because
+				a floor presented as a total is not a receipt. The commit date is <code>commit.author.date</code>.
 			</p>
 
 			<h2 id="identities">Headcount, agent</h2>

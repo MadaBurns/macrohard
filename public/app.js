@@ -154,6 +154,13 @@
 				foot.append(a, i < repos.length - 1 ? ', ' : '');
 			});
 		}
+		// A repository past the fetch ceiling is a floor, and a floor is labelled.
+		const cut = d.truncated || [];
+		if (cut.length) {
+			foot.append(
+				` · ${cut.join(', ')}: counted to the first ${fmtInt(d.commitCeiling)} commits of the window only, so that total is a floor.`,
+			);
+		}
 
 		renderSegments(d);
 		renderSelf(d);

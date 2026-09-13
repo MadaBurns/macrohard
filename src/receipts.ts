@@ -25,6 +25,8 @@ export interface RepoInput {
 	url: string;
 	commits: GitHubCommit[];
 	pulls: GitHubPull[];
+	/** The commit list hit the page ceiling: `commits` is a floor, not the window. */
+	truncated?: boolean;
 }
 
 export interface LedgerRow {
@@ -63,11 +65,25 @@ export interface Receipts {
 	 * of the read, not of the moment you ask — and the page already has this.
 	 */
 	tokenRejected: boolean;
+	/**
+	 * Repositories whose commit list hit the page ceiling. Their totals are a
+	 * floor and the page says so — a truncated count presented as complete would
+	 * be the one figure here a stranger could not reproduce.
+	 */
+	truncated: string[];
+	/** Commits per repository the fetch stops at (MAX_PAGES × per_page). */
+	commitCeiling: number;
 	method: { agentRule: string; source: string };
 }
 
 export const RECEIPTS_KEY = 'receipts:latest';
 export const LEDGER_ROWS = 8;
+// Pages of 100 per list. bv-mcp was at 555 commits in the window when this was
+// set; 3,000 leaves room without letting a runaway Link chain spend the hour's
+// quota. Extra pages cost nothing unless they exist.
+const MAX_PAGES = 30;
+const PER_PAGE = 100;
+export const COMMIT_CEILING = MAX_PAGES * PER_PAGE;
 
 const TRAILER_RE = /^co-authored-by:\s*(claude[^<\n]*?)\s*<[^>]*>\s*$/gim;
 
@@ -166,6 +182,8 @@ export function aggregate(inputs: RepoInput[], now: Date, windowDays: number): R
 		repos,
 		// aggregate() only sees what was fetched, never how. refreshReceipts overwrites this.
 		tokenRejected: false,
+		truncated: inputs.filter((r) => r.truncated).map((r) => r.name),
+		commitCeiling: COMMIT_CEILING,
 		method: {
 			agentRule: 'A commit is agent-authored when its message carries a "Co-Authored-By: Claude …" trailer.',
 			source: 'GitHub REST API: /repos/{owner}/{repo}/commits?since=… and /repos/{owner}/{repo}/pulls?state=closed',
@@ -178,8 +196,6 @@ export function aggregate(inputs: RepoInput[], now: Date, windowDays: number): R
 // ---------------------------------------------------------------------------
 
 export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
-
-const MAX_PAGES = 10;
 
 const GITHUB_API = 'https://api.github.com/';
 
@@ -226,24 +242,25 @@ async function ghFetch(fetcher: Fetcher, url: string, token: string | undefined,
 	return fetcher(url, { headers: BASE_HEADERS });
 }
 
+/** Follow Link: rel=next up to MAX_PAGES. `truncated` says a next page was left unread. */
 async function paginate<T>(
 	fetcher: Fetcher,
 	url: string,
 	token: string | undefined,
 	state: TokenState,
 	stop?: (page: T[]) => boolean,
-): Promise<T[]> {
-	const out: T[] = [];
+): Promise<{ items: T[]; truncated: boolean }> {
+	const items: T[] = [];
 	let next: string | null = url;
 	for (let i = 0; i < MAX_PAGES && next; i++) {
 		const res = await ghFetch(fetcher, next, token, state);
 		if (!res.ok) throw new Error(`GitHub ${res.status} for ${next}`);
 		const page = (await res.json()) as T[];
-		out.push(...page);
-		if (stop && stop(page)) break;
+		items.push(...page);
+		if (stop && stop(page)) return { items, truncated: false };
 		next = nextLink(res);
 	}
-	return out;
+	return { items, truncated: next !== null };
 }
 
 export async function fetchRepo(
@@ -256,16 +273,22 @@ export async function fetchRepo(
 ): Promise<RepoInput> {
 	const base = `https://api.github.com/repos/${owner}/${name}`;
 	const sinceIso = since.toISOString();
-	const commits = await paginate<GitHubCommit>(fetcher, `${base}/commits?since=${encodeURIComponent(sinceIso)}&per_page=100`, token, state);
+	const commits = await paginate<GitHubCommit>(
+		fetcher,
+		`${base}/commits?since=${encodeURIComponent(sinceIso)}&per_page=${PER_PAGE}`,
+		token,
+		state,
+	);
 	// Closed PRs come newest-updated first; stop once a whole page predates the window.
 	const pulls = await paginate<GitHubPull>(
 		fetcher,
-		`${base}/pulls?state=closed&sort=updated&direction=desc&per_page=100`,
+		`${base}/pulls?state=closed&sort=updated&direction=desc&per_page=${PER_PAGE}`,
 		token,
 		state,
 		(page) => page.length > 0 && page.every((p) => p.created_at < sinceIso && (!p.merged_at || p.merged_at < sinceIso)),
 	);
-	return { name, url: `https://github.com/${owner}/${name}`, commits, pulls };
+	if (commits.truncated) console.error(`receipts: ${owner}/${name} exceeded ${COMMIT_CEILING} commits in the window; its total is a floor`);
+	return { name, url: `https://github.com/${owner}/${name}`, commits: commits.items, pulls: pulls.items, truncated: commits.truncated };
 }
 
 export interface RefreshOpts {

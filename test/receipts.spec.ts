@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
 import {
+	COMMIT_CEILING,
 	RECEIPTS_KEY,
 	aggregate,
 	fetchRepo,
@@ -139,6 +140,28 @@ describe('fetchRepo', () => {
 		expect(seen.authorization).toBeUndefined();
 		await fetchRepo(fetcher, 'o', 'r', NOW, 'tok');
 		expect(seen.authorization).toBe('Bearer tok');
+	});
+
+	it('stops at the page ceiling and says so, rather than presenting a floor as a total', async () => {
+		const base = 'https://api.github.com/repos/o/r';
+		let calls = 0;
+		// Every page points to another: the chain never ends.
+		const fetcher: Fetcher = async (url) => {
+			calls++;
+			const headers = new Headers({ 'content-type': 'application/json', link: `<${base}/commits?page=${calls + 1}>; rel="next"` });
+			return new Response(JSON.stringify(url.includes('/commits') ? commits.slice(0, 1) : []), { headers });
+		};
+		const repo = await fetchRepo(fetcher, 'o', 'r', NOW);
+		expect(repo.truncated).toBe(true);
+		expect(repo.commits.length).toBe(COMMIT_CEILING / 100);
+		const r = aggregate([repo], NOW, 90);
+		expect(r.truncated).toEqual(['r']);
+		expect(r.commitCeiling).toBe(COMMIT_CEILING);
+		// A finite chain is not truncated.
+		const { fetcher: finite } = fakeGitHub({ [`${base}/commits?`]: { body: commits }, [`${base}/pulls?`]: { body: pulls } });
+		const ok = await fetchRepo(finite, 'o', 'r', NOW);
+		expect(ok.truncated).toBe(false);
+		expect(aggregate([ok], NOW, 90).truncated).toEqual([]);
 	});
 
 	it('throws on a non-2xx so the caller keeps the previous snapshot', async () => {
