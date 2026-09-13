@@ -67,12 +67,18 @@ h1{margin:14px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-siz
 </div></body></html>`;
 }
 
+/**
+ * A slow font CDN must fail the render, not stretch it: every second here is
+ * Browser Rendering budget, and the generic card is always ready to stand in.
+ */
+const RENDER_TIMEOUT_MS = 8_000;
+
 export async function renderOgPng(browser: BrowserWorker, html: string): Promise<Uint8Array> {
 	const b = await puppeteer.launch(browser);
 	try {
 		const page = await b.newPage();
 		await page.setViewport({ width: 1200, height: 630 });
-		await page.setContent(html, { waitUntil: 'networkidle0' });
+		await page.setContent(html, { waitUntil: 'networkidle0', timeout: RENDER_TIMEOUT_MS });
 		await page.evaluate('document.fonts.ready');
 		const png = await page.screenshot({ type: 'png' });
 		return new Uint8Array(png);
