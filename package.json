@@ -21,7 +21,7 @@
 		"zod": "^3.25.0"
 	},
 	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.8.0",
+		"@cloudflare/vitest-pool-workers": "^0.22.0",
 		"prettier": "^3.6.0",
 		"typescript": "^5.9.0",
 		"vitest": "~3.2.0",
