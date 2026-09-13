@@ -19,6 +19,18 @@ export function dayKey(now: Date, prefix = 'cap'): string {
 export const GUARD_OUTAGE_KEY = 'guard:outage';
 export const GUARD_OUTAGE_TTL = 300;
 
+/**
+ * At most one receipts refresh in flight per window. Every visitor who reads a
+ * stale snapshot would otherwise schedule their own ~20-call GitHub refresh,
+ * and the page re-polls a stale snapshot every few seconds — so once the token
+ * lapses and the anonymous quota is gone, a handful of open tabs is a standing
+ * hammer on the API. Held, not released: a refresh that failed should not be
+ * retried by the next visitor a second later. KV is not a strict mutex; this
+ * collapses the dominant case, as the per-id render lock does.
+ */
+export const REFRESH_LOCK_KEY = 'refreshlock';
+export const REFRESH_LOCK_TTL = 120;
+
 export interface CapResult {
 	allowed: boolean;
 	used: number;

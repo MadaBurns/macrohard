@@ -80,7 +80,9 @@ Keep it that way — a test that needs a real binding belongs in `scripts/e2e.sh
 - `.claude/worktrees/` holds a full second checkout. Grep/glob from the repo root will match it —
   scope searches to `src/`, `test/`, `public/`.
 - `STAFF_RL` is optional in `AppEnv` because the test pool's wrangler doesn't provide the binding;
-  the daily cap is what holds there. `BROWSER` is optional for the same reason.
+  the daily cap is what holds there. `BROWSER` is optional so local dev and injected fakes run
+  without it; the test pool does bind one, but it answers 405, so `prerenderOg` takes its error
+  path there (and consumes the test KV's `ogcap:` and `oglock:` keys doing so).
 - The per-IP rate limit is per-location and approximate. It is not a spend bound; the daily cap is.
 - This repository counts itself, and Note 5 on the front page says its only non-agent commits are merges. Every non-merge commit
   must carry the `Co-Authored-By: Claude …` trailer; merges are the human's. Break this and Note 5 becomes false.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SELF, env } from 'cloudflare:test';
+import { FALLBACK_ORGS } from '../src/staff';
 
 const ORIGIN = 'https://macrohard.nz';
 
@@ -19,7 +20,8 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(await res.text()).toContain('Co-Authored-By');
 	});
 
-	it('renders the front page for a permalink path', async () => {
+	it('renders the front page for a minted permalink path', async () => {
+		await env.KV.put('s:abcdefgh', JSON.stringify({ id: 'abcdefgh', query: 'x', org: FALLBACK_ORGS.generic, mode: 'ai', createdAt: '' }));
 		const res = await SELF.fetch(`${ORIGIN}/s/abcdefgh`);
 		expect(res.status).toBe(200);
 		expect(await res.text()).toContain('id="staff-form"');
@@ -124,6 +126,17 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(html).not.toContain('Note 3 — Subsequent events');
 		expect(html).toContain('This report contains none.');
 		expect(html).toContain('data-n="8.7"');
+	});
+
+	it('describes the spent-budget fallback as the code serves it: one proposal, not a choice of five', async () => {
+		// Past the cap the route serves FALLBACK_ORGS.generic only, because no guard
+		// has seen the query. "One of five" is the model-failure path, not this one.
+		const home = flat(await (await SELF.fetch(`${ORIGIN}/`)).text());
+		expect(home).not.toContain('one of five standing proposals');
+		expect(home).toContain('later visitors receive a standing proposal');
+		const method = flat(await (await SELF.fetch(`${ORIGIN}/method`)).text());
+		expect(method).not.toContain('budget is spent, one of five');
+		expect(method).toContain('the generic one is served and your text is not stored');
 	});
 
 	it('carries the live band, and the band never ships a figure the page has not fetched', async () => {

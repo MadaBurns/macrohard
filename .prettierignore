@@ -3,3 +3,5 @@ node_modules
 worker-configuration.d.ts
 package-lock.json
 .superpowers
+# Local agent settings; globally gitignored, so the format check must not see them either.
+.claude/

@@ -6,6 +6,8 @@ import {
 	GUARD_OUTAGE_KEY,
 	GUARD_OUTAGE_TTL,
 	ID_RE,
+	REFRESH_LOCK_KEY,
+	REFRESH_LOCK_TTL,
 	TURNSTILE_ACTION,
 	consumeDailyCap,
 	newId,
@@ -27,6 +29,15 @@ const RECEIPTS_MAX_AGE_MS = 45 * 60_000;
 // At ~1 KB a stored org, KV storage was never the constraint here.
 const OG_TTL = 365 * 86_400;
 const COUNT_KEY = 'count:total';
+const ogLockKey = (id: string) => `oglock:${id}`;
+// How long /og/:id.png waits for a render another request already started.
+// A share link is posted seconds after it is minted, while the pre-render is
+// still running; a crawler that arrives inside that window and is handed the
+// generic card caches the generic card. A render takes a few seconds, so a
+// bounded wait usually returns the real one. KV is eventually consistent, so
+// this is best effort, never a guarantee.
+const OG_WAIT_POLLS = 5;
+const OG_WAIT_INTERVAL_MS = 1000;
 
 export interface StoredOrg {
 	id: string;
@@ -51,6 +62,21 @@ function refreshOpts(env: AppEnv) {
 	};
 }
 
+/**
+ * Refresh the receipts unless a refresh is already in flight (see
+ * REFRESH_LOCK_KEY). Never throws: a failed refresh is logged and the previous
+ * snapshot stands, for the cron and the stale-visit path alike.
+ */
+async function refreshOnce(env: AppEnv, reason: string): Promise<void> {
+	if (await env.KV.get(REFRESH_LOCK_KEY)) return;
+	await env.KV.put(REFRESH_LOCK_KEY, '1', { expirationTtl: REFRESH_LOCK_TTL });
+	try {
+		await refreshReceipts(env.KV, refreshOpts(env));
+	} catch (err) {
+		console.error(`${reason} refresh failed`, String(err));
+	}
+}
+
 async function bump(kv: KVNamespace, key: string): Promise<void> {
 	// Eventually consistent; a counter, not a ledger.
 	const n = Number((await kv.get(key)) ?? '0') || 0;
@@ -69,7 +95,7 @@ async function bump(kv: KVNamespace, key: string): Promise<void> {
  */
 async function prerenderOg(env: AppEnv, id: string, org: Org): Promise<Uint8Array | null> {
 	if (!env.BROWSER) return null;
-	const lockKey = `oglock:${id}`;
+	const lockKey = ogLockKey(id);
 	if (await env.KV.get(lockKey)) return null; // a render for this id is already in flight
 	const budget = await consumeDailyCap(env.KV, new Date(), Number(env.OG_DAILY_CAP) || 0, 'ogcap');
 	if (!budget.allowed) return null;
@@ -84,6 +110,16 @@ async function prerenderOg(env: AppEnv, id: string, org: Org): Promise<Uint8Arra
 		console.error('og render failed', id, String(err));
 		return null;
 	}
+}
+
+/** Poll for a PNG that another request is rendering right now. */
+async function awaitOgPng(kv: KVNamespace, id: string): Promise<ArrayBuffer | null> {
+	for (let i = 0; i < OG_WAIT_POLLS; i++) {
+		await new Promise((r) => setTimeout(r, OG_WAIT_INTERVAL_MS));
+		const png = await kv.get(`og:${id}`, 'arrayBuffer');
+		if (png) return png;
+	}
+	return null;
 }
 
 /** Rewrite the front page's meta tags so a shared permalink is its own card. */
@@ -164,12 +200,8 @@ app.get('/api/receipts', async (c) => {
 	const now = new Date();
 	const current = await getReceipts(c.env.KV);
 	const needsRefresh = !current || isStale(current, now, RECEIPTS_MAX_AGE_MS);
-	if (needsRefresh) {
-		// Refresh out-of-band; serve what we have (or "warming") rather than block.
-		c.executionCtx.waitUntil(
-			refreshReceipts(c.env.KV, refreshOpts(c.env)).catch((err) => console.error('receipts refresh failed', String(err))),
-		);
-	}
+	// Refresh out-of-band; serve what we have (or "warming") rather than block.
+	if (needsRefresh) c.executionCtx.waitUntil(refreshOnce(c.env, 'receipts'));
 	if (!current) return c.json({ status: 'warming' as const }, 202);
 	const body: Receipts & { status: 'ok'; stale: boolean } = { ...current, status: 'ok', stale: needsRefresh };
 	return c.json(body, 200, { 'cache-control': 'public, max-age=60' });
@@ -268,8 +300,6 @@ app.get('/api/s/:id', async (c) => {
 	return c.json({ ...stored, share: shareText(stored.org) }, 200, { 'cache-control': 'public, max-age=3600' });
 });
 
-app.get('/api/presets', (c) => c.json({ presets: Object.keys(FALLBACK_ORGS).filter((k) => k !== 'generic') }));
-
 // Share image for a permalink: cached PNG, else render now, else the generic card.
 app.get('/og/:file', async (c) => {
 	const m = c.req.param('file').match(/^([a-z2-9]{6,12})\.png$/);
@@ -280,37 +310,48 @@ app.get('/og/:file', async (c) => {
 	if (cachedPng) return new Response(cachedPng, { headers });
 	const stored = await c.env.KV.get<StoredOrg>(`s:${id}`, 'json');
 	if (!stored) return c.json({ error: 'Not found.' }, 404);
-	const png = await prerenderOg(c.env, id, stored.org);
+	// Someone else is rendering it: wait for theirs rather than hand out the generic card.
+	const inFlight = await c.env.KV.get(ogLockKey(id));
+	const png = inFlight ? await awaitOgPng(c.env.KV, id) : await prerenderOg(c.env, id, stored.org);
 	if (png) return new Response(png, { headers });
+	// The generic card is a stand-in, not the answer: nothing should cache this redirect.
+	c.header('cache-control', 'no-store');
 	return c.redirect('/og.png', 302);
 });
 
 app.all('/api/*', (c) => c.json({ error: 'Not found.' }, 404));
 
-// Everything else is a static asset (run_worker_first is on so the www
-// redirect above sees every request). Permalinks render the front page with
-// their own meta tags; the client reads the id from the path. Unknown paths
-// get the 404 page.
+/** The 404 page, with a 404 status: the assets binding would serve it as a 200. */
+async function notFound(c: { env: AppEnv; req: { raw: Request } }, url: URL): Promise<Response> {
+	url.pathname = '/404';
+	const nf = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+	return new Response(nf.body, { status: 404, headers: nf.headers });
+}
+
+// Everything else is a static asset. run_worker_first lists the paths that
+// reach here, so the www redirect above sees what a human navigates to, not
+// every stylesheet. Permalinks render the front page with their own meta tags;
+// the client reads the id from the path. Unknown paths, and permalinks that
+// were never minted, get the 404 page.
 app.get('*', async (c) => {
 	const url = new URL(c.req.url);
 	// Ask for extension-less paths: the binding's html_handling 308s `/x.html` → `/x`.
 	const perma = url.pathname.match(/^\/s\/([a-z2-9]{6,12})$/);
 	if (perma) {
+		const stored = await c.env.KV.get<StoredOrg>(`s:${perma[1]}`, 'json');
+		if (!stored) return notFound(c, url);
 		url.pathname = '/';
 		const page = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
-		const stored = await c.env.KV.get<StoredOrg>(`s:${perma[1]}`, 'json');
-		return stored ? personalise(page, url.origin, perma[1], stored.org) : page;
+		return personalise(page, url.origin, perma[1], stored.org);
 	}
 	const res = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
 	if (res.status !== 404) return res;
-	url.pathname = '/404';
-	const nf = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
-	return new Response(nf.body, { status: 404, headers: nf.headers });
+	return notFound(c, url);
 });
 
 export default {
 	fetch: app.fetch,
 	async scheduled(_event: ScheduledEvent, env: AppEnv, ctx: ExecutionContext) {
-		ctx.waitUntil(refreshReceipts(env.KV, refreshOpts(env)).catch((err) => console.error('scheduled refresh failed', String(err))));
+		ctx.waitUntil(refreshOnce(env, 'scheduled'));
 	},
 };

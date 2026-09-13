@@ -31,9 +31,12 @@ describe('personalised permalinks', () => {
 		expect(html).toContain(`rel="canonical" href="${ORIGIN}/s/${ID}"`);
 	});
 
-	it('serves the generic page for an unknown id', async () => {
-		const html = await (await SELF.fetch(`${ORIGIN}/s/zzzzzzzz`)).text();
-		expect(html).toContain('property="og:title" content="Macrohard — the software company that runs itself"');
+	it('an id that was never minted is a 404, like its API twin, not a blank front page', async () => {
+		const res = await SELF.fetch(`${ORIGIN}/s/zzzzzzzz`);
+		expect(res.status).toBe(404);
+		const html = await res.text();
+		expect(html).toContain('qualified opinion');
+		expect(html).not.toContain('id="staff-form"');
 	});
 
 	it('/api/s/:id includes the pre-written share text', async () => {
@@ -58,10 +61,27 @@ describe('/og/:id.png', () => {
 
 	it('falls back to the generic card when nothing is cached and rendering is unavailable', async () => {
 		await env.KV.delete(`og:${ID}`);
+		await env.KV.delete(`oglock:${ID}`);
 		const res = await SELF.fetch(`${ORIGIN}/og/${ID}.png`, { redirect: 'manual' });
 		// Either the renderer is unavailable here (302 to the generic card) or, if the
 		// pool happens to provide one, a real PNG. Never a 5xx.
 		expect([200, 302]).toContain(res.status);
-		if (res.status === 302) expect(res.headers.get('location')).toBe('/og.png');
+		if (res.status === 302) {
+			expect(res.headers.get('location')).toBe('/og.png');
+			// A stand-in must not be cached as the answer by whoever followed it.
+			expect(res.headers.get('cache-control')).toBe('no-store');
+		}
+	});
+
+	it('waits for a render another request already started instead of handing a crawler the generic card', async () => {
+		await env.KV.delete(`og:${ID}`);
+		await env.KV.put(`oglock:${ID}`, '1', { expirationTtl: 120 });
+		const bytes = new Uint8Array([137, 80, 78, 71, 1, 2, 3]);
+		// The other request's render lands while this one is waiting.
+		setTimeout(() => env.KV.put(`og:${ID}`, bytes), 300);
+		const res = await SELF.fetch(`${ORIGIN}/og/${ID}.png`, { redirect: 'manual' });
+		expect(res.status).toBe(200);
+		expect(new Uint8Array(await res.arrayBuffer())).toEqual(bytes);
+		await env.KV.delete(`oglock:${ID}`);
 	});
 });

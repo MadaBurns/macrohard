@@ -18,6 +18,7 @@ src/index.ts       routes + cron
 src/receipts.ts    GitHub → figures. The tests are the spec for every number on the page.
 src/staff.ts       "Staff your company": Workers AI, strict schema, scrubbed output, canned fallback
 src/limits.ts      daily spend cap, per-query cache, permalink ids, optional Turnstile
+src/og.ts          per-permalink share card: HTML → PNG via Browser Rendering, cached in KV
 test/              hermetic — no network, no remote bindings
 ```
 
