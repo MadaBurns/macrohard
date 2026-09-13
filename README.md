@@ -31,8 +31,10 @@ Nothing is inferred from author names. See `parseAgentTrailers` in
 
 1. Per-query result cache in KV (repeat prompts are free).
 2. Per-IP rate limit (6/min) via a Workers rate-limit binding.
-3. Global daily cap (`STAFF_DAILY_CAP`, default 400). Past it, a canned org is
-   served and labelled as such. Set it to `0` to switch the model off entirely.
+3. Global daily cap (`STAFF_DAILY_CAP`, 1500 — the sizing note in
+   `wrangler.jsonc` shows the neuron cost behind that number). Past it, a canned
+   org is served and labelled as such. Set it to `0` to switch the model off
+   entirely.
 4. Turnstile. `TURNSTILE_SITE_KEY` is set (it is public — it ships in the
    page), so the gate turns on the moment `TURNSTILE_SECRET` is put in place
    and stays inert until then. A token is accepted only when siteverify
