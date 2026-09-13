@@ -13,6 +13,18 @@ cd "$(dirname "$0")/.."
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 [ -x "$CHROME" ] || { echo "Chrome not found at $CHROME (set CHROME=...)" >&2; exit 1; }
 
+# Scratch space, and a restore path. The date stamp below rewrites og.html in
+# place, so a render that fails after it would otherwise leave the HTML dated
+# for a card that was never produced. Roll it back unless the run succeeds.
+TMPD="$(mktemp -d -t og-render)"
+RENDERED=0
+cleanup() {
+	[ "$RENDERED" = 1 ] || cp "$TMPD/og.html.bak" public/og.html
+	rm -rf "$TMPD"
+}
+trap cleanup EXIT
+cp public/og.html "$TMPD/og.html.bak"
+
 # The card states a point-in-time figure, so the "As at" date is what keeps it
 # honest. Stamp today's date before rendering: a re-render can never ship a
 # stale date, and public/og.html stays the source of truth for the last render.
@@ -28,13 +40,10 @@ if out != s:
 print(f'card dated: {today}')
 STAMP
 
-# mktemp -d, not "$(mktemp).png" — appending to a reserved name yields a path
-# mktemp never reserved, which is a predictable clobber target in a shared tmp.
-TMPD="$(mktemp -d -t og-render)"
-trap 'rm -rf "$TMPD"' EXIT
 TMP="$TMPD/render.png"
 "$CHROME" --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
 	--window-size=1200,800 --virtual-time-budget=8000 --screenshot="$TMP" \
 	"file://$PWD/public/og.html" 2>/dev/null
 /usr/bin/python3 scripts/og-crop.py "$TMP" public/og.png 1200 630
+RENDERED=1
 sips -g pixelWidth -g pixelHeight public/og.png
