@@ -26,6 +26,8 @@ export interface AppEnv {
 	AI_MODEL: string;
 	CONTACT_EMAIL: string;
 	TURNSTILE_SITE_KEY: string;
+	/** Comma-separated hosts allowed to mint a Turnstile token. */
+	TURNSTILE_HOSTNAMES?: string;
 	// Secrets (optional)
 	GITHUB_TOKEN?: string;
 	TURNSTILE_SECRET?: string;

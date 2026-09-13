@@ -321,19 +321,20 @@
 	async function loadConfig() {
 		try {
 			const cfg = await (await fetch('/api/config')).json();
-			if (cfg.turnstileSiteKey) mountTurnstile(cfg.turnstileSiteKey);
+			if (cfg.turnstileSiteKey) mountTurnstile(cfg.turnstileSiteKey, cfg.turnstileAction);
 		} catch {
 			/* config is optional */
 		}
 	}
 
-	function mountTurnstile(sitekey) {
+	function mountTurnstile(sitekey, action) {
 		const s = document.createElement('script');
 		s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 		s.async = true;
 		s.onload = () => {
 			turnstileWidget = window.turnstile.render('#turnstile', {
 				sitekey,
+				action,
 				callback: (t) => (turnstileToken = t),
 				'expired-callback': () => (turnstileToken = null),
 				theme: 'light',

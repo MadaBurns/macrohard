@@ -71,7 +71,14 @@
 		"OG_DAILY_CAP": "150",
 		"AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
 		"CONTACT_EMAIL": "hello@macrohard.nz",
-		"TURNSTILE_SITE_KEY": "",
+		// Turnstile. The sitekey is public — it ships in the page. The gate only
+		// engages once TURNSTILE_SECRET is set as a secret, so this is inert
+		// until the operator puts it there.
+		"TURNSTILE_SITE_KEY": "0x4AAAAAAEzA4MBJpyLc1wCT",
+		// Hosts allowed to mint a token. siteverify reports the minting host and
+		// anything not listed is refused; empty refuses everything. Deliberately
+		// excludes localhost — a token minted on a dev box must not work here.
+		"TURNSTILE_HOSTNAMES": "macrohard.nz",
 	},
 
 	"observability": { "enabled": true, "head_sampling_rate": 1 },

@@ -68,11 +68,59 @@ export const ID_RE = /^[a-z2-9]{6,12}$/;
 // Turnstile (optional — only enforced when a secret is configured)
 // ---------------------------------------------------------------------------
 
-export async function verifyTurnstile(secret: string, token: string, ip: string | null, fetcher = fetch): Promise<boolean> {
+/**
+ * The surface the widget is rendered for. siteverify echoes it back, so a token
+ * minted for this action cannot be replayed against a different one. Served to
+ * the client via /api/config so the two sides cannot drift apart.
+ */
+export const TURNSTILE_ACTION = 'staff';
+
+/** Tokens are short-lived and single-use; anything this long is not one. */
+const TURNSTILE_MAX_TOKEN = 2048;
+const TURNSTILE_TIMEOUT_MS = 10_000;
+
+/** `a.example, b.example` -> `['a.example', 'b.example']`. */
+export function parseHostnames(raw: string | undefined): string[] {
+	return (raw ?? '')
+		.split(',')
+		.map((h) => h.trim())
+		.filter(Boolean);
+}
+
+export interface TurnstileCheck {
+	secret: string;
+	token: string;
+	ip: string | null;
+	/** Must equal the action the widget was rendered with. */
+	action: string;
+	/** Hosts allowed to mint a token. Empty refuses everything — fail closed. */
+	hostnames: readonly string[];
+}
+
+/**
+ * Unlike the other bounds here this one fails CLOSED. The rest of the desk
+ * degrades to something serveable because the cost of a false negative is a
+ * worse answer; here it is an unmoderated write, so a siteverify we cannot
+ * complete is a refusal, not a pass.
+ */
+export async function verifyTurnstile(check: TurnstileCheck, fetcher = fetch): Promise<boolean> {
+	const { secret, token, ip, action, hostnames } = check;
+	if (!token || token.length > TURNSTILE_MAX_TOKEN || hostnames.length === 0) return false;
 	const body = new URLSearchParams({ secret, response: token });
 	if (ip) body.set('remoteip', ip);
-	const res = await fetcher('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body });
-	if (!res.ok) return false;
-	const data = (await res.json()) as { success?: boolean };
-	return data.success === true;
+	let data: { success?: boolean; action?: string; hostname?: string };
+	try {
+		const res = await fetcher('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+			method: 'POST',
+			body,
+			signal: AbortSignal.timeout(TURNSTILE_TIMEOUT_MS),
+		});
+		if (!res.ok) return false;
+		data = (await res.json()) as typeof data;
+	} catch {
+		return false;
+	}
+	// success alone is not enough: the token must be for this surface, minted on
+	// a host we actually serve.
+	return data.success === true && data.action === action && typeof data.hostname === 'string' && hostnames.includes(data.hostname);
 }
