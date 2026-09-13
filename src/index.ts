@@ -300,8 +300,6 @@ app.get('/api/s/:id', async (c) => {
 	return c.json({ ...stored, share: shareText(stored.org) }, 200, { 'cache-control': 'public, max-age=3600' });
 });
 
-app.get('/api/presets', (c) => c.json({ presets: Object.keys(FALLBACK_ORGS).filter((k) => k !== 'generic') }));
-
 // Share image for a permalink: cached PNG, else render now, else the generic card.
 app.get('/og/:file', async (c) => {
 	const m = c.req.param('file').match(/^([a-z2-9]{6,12})\.png$/);

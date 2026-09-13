@@ -99,5 +99,7 @@ describe('edges', () => {
 		const res = await SELF.fetch(`${ORIGIN}/api/nope`);
 		expect(res.status).toBe(404);
 		expect(res.headers.get('content-type')).toContain('application/json');
+		// Once served, never called: the preset chips are markup. Removed rather than kept as dead surface.
+		expect((await SELF.fetch(`${ORIGIN}/api/presets`)).status).toBe(404);
 	});
 });
