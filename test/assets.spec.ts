@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SELF, env } from 'cloudflare:test';
+import { FALLBACK_ORGS } from '../src/staff';
 
 const ORIGIN = 'https://macrohard.nz';
 
@@ -19,7 +20,8 @@ describe('static routes through the Worker (run_worker_first)', () => {
 		expect(await res.text()).toContain('Co-Authored-By');
 	});
 
-	it('renders the front page for a permalink path', async () => {
+	it('renders the front page for a minted permalink path', async () => {
+		await env.KV.put('s:abcdefgh', JSON.stringify({ id: 'abcdefgh', query: 'x', org: FALLBACK_ORGS.generic, mode: 'ai', createdAt: '' }));
 		const res = await SELF.fetch(`${ORIGIN}/s/abcdefgh`);
 		expect(res.status).toBe(200);
 		expect(await res.text()).toContain('id="staff-form"');
