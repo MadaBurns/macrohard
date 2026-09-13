@@ -23,7 +23,8 @@ export const OrgSchema = z.object({
 	agents: z.number().int().min(1).max(60),
 	runRateUsdPerDay: z.number().int().min(1).max(100_000),
 	cycleTime: Clean(24),
-	roles: z.array(RoleSchema).min(3).max(7),
+	// Same bound as the prompt and JSON_SCHEMA: three limits that disagree are two bugs waiting.
+	roles: z.array(RoleSchema).min(3).max(6),
 });
 
 export type Org = z.infer<typeof OrgSchema>;
