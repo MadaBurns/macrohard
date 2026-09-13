@@ -74,6 +74,11 @@
 	// Receipts
 	// ---------------------------------------------------------------------
 	let warmTries = 0;
+	// Bounded: a snapshot that stays stale (the token lapsed, GitHub is refusing
+	// us) must not turn every open tab into a request every eight seconds for
+	// as long as it is open. After a few looks, the minute poll is enough.
+	let staleTries = 0;
+	const STALE_TRIES = 3;
 	// Commits the page has shown, and the subset that landed while you watched.
 	const seenShas = new Set();
 	const freshShas = new Set();
@@ -156,7 +161,8 @@
 		renderRun(d);
 		renderBand();
 		// A refresh is already in flight upstream; look again rather than wait for the minute.
-		if (d.stale) setTimeout(loadReceipts, 8000);
+		if (!d.stale) staleTries = 0;
+		else if (staleTries++ < STALE_TRIES) setTimeout(loadReceipts, 8000);
 	}
 
 	// ---------------------------------------------------------------------

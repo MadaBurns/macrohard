@@ -6,6 +6,8 @@ import {
 	GUARD_OUTAGE_KEY,
 	GUARD_OUTAGE_TTL,
 	ID_RE,
+	REFRESH_LOCK_KEY,
+	REFRESH_LOCK_TTL,
 	TURNSTILE_ACTION,
 	consumeDailyCap,
 	newId,
@@ -49,6 +51,21 @@ function refreshOpts(env: AppEnv) {
 		windowDays: Number(env.RECEIPTS_WINDOW_DAYS) || 90,
 		token: env.GITHUB_TOKEN || undefined,
 	};
+}
+
+/**
+ * Refresh the receipts unless a refresh is already in flight (see
+ * REFRESH_LOCK_KEY). Never throws: a failed refresh is logged and the previous
+ * snapshot stands, for the cron and the stale-visit path alike.
+ */
+async function refreshOnce(env: AppEnv, reason: string): Promise<void> {
+	if (await env.KV.get(REFRESH_LOCK_KEY)) return;
+	await env.KV.put(REFRESH_LOCK_KEY, '1', { expirationTtl: REFRESH_LOCK_TTL });
+	try {
+		await refreshReceipts(env.KV, refreshOpts(env));
+	} catch (err) {
+		console.error(`${reason} refresh failed`, String(err));
+	}
 }
 
 async function bump(kv: KVNamespace, key: string): Promise<void> {
@@ -164,12 +181,8 @@ app.get('/api/receipts', async (c) => {
 	const now = new Date();
 	const current = await getReceipts(c.env.KV);
 	const needsRefresh = !current || isStale(current, now, RECEIPTS_MAX_AGE_MS);
-	if (needsRefresh) {
-		// Refresh out-of-band; serve what we have (or "warming") rather than block.
-		c.executionCtx.waitUntil(
-			refreshReceipts(c.env.KV, refreshOpts(c.env)).catch((err) => console.error('receipts refresh failed', String(err))),
-		);
-	}
+	// Refresh out-of-band; serve what we have (or "warming") rather than block.
+	if (needsRefresh) c.executionCtx.waitUntil(refreshOnce(c.env, 'receipts'));
 	if (!current) return c.json({ status: 'warming' as const }, 202);
 	const body: Receipts & { status: 'ok'; stale: boolean } = { ...current, status: 'ok', stale: needsRefresh };
 	return c.json(body, 200, { 'cache-control': 'public, max-age=60' });
@@ -311,6 +324,6 @@ app.get('*', async (c) => {
 export default {
 	fetch: app.fetch,
 	async scheduled(_event: ScheduledEvent, env: AppEnv, ctx: ExecutionContext) {
-		ctx.waitUntil(refreshReceipts(env.KV, refreshOpts(env)).catch((err) => console.error('scheduled refresh failed', String(err))));
+		ctx.waitUntil(refreshOnce(env, 'scheduled'));
 	},
 };
