@@ -1,0 +1,27 @@
+# Dependency currency. Minor and patch updates arrive as one grouped PR a week
+# so the advisories stop accumulating unseen; majors stay separate because the
+# test-harness majors in particular are a migration, not a bump (see the
+# correction in docs/superpowers/2026-09-12-improvement-backlog.md §7).
+# The cooldown waits a week after a version is published before proposing it:
+# a freshly published package is the supply-chain window, and nothing here is
+# urgent enough to be first. CI runs the baseline chain on every PR; merge
+# stays with the operator.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    labels: [dependencies]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    labels: [dependencies]

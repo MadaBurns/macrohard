@@ -81,6 +81,17 @@ print('\033[%dm  %-22s\033[0m %s' % (32 if commits else 31,
       else '0 of %d — A FALSE ZERO WOULD SHOW HERE' % d['totalCommits']))
 print('\033[2m  %-22s\033[0m stale=%s  ledger=%d rows  repos=%d\033[0m'
       % ('', d.get('stale'), len(d['ledger']), len(d['repos'])))
+# The token is an optimisation the cron loses without: a 401 on the last refresh
+# means the snapshot was read anonymously (60/hr, shared egress) and will go stale
+# first. Only a rejection is a fact here; "not rejected" also covers "no token set".
+if d.get('tokenRejected'):
+    print('\033[31m  %-22s\033[0m GitHub refused GITHUB_TOKEN on the last refresh — rotate it' % 'token')
+else:
+    print('\033[2m  %-22s\033[0m not rejected on the last refresh (absent or accepted)\033[0m' % 'token')
+cut = d.get('truncated') or []
+if cut:
+    print('\033[33m  %-22s\033[0m %s hit the %s-commit ceiling; that total is a floor'
+          % ('truncated', ', '.join(cut), d.get('commitCeiling')))
 PY
 
 	# --- spend --------------------------------------------------------------
