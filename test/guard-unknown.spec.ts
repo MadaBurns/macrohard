@@ -25,9 +25,9 @@ type GuardScript = 'safe' | 'unsafe' | 'throw';
 /**
  * An AI binding that answers exactly as scripted. The guard model is asked twice
  * per generation — once for the query, once for the finished org — so the script
- * names both in order.
+ * names both in order. The generator answers with ORG unless told to throw.
  */
-function fakeAi(onQuery: GuardScript, onOrg: GuardScript = 'safe') {
+function fakeAi(onQuery: GuardScript, onOrg: GuardScript = 'safe', generator: 'ok' | 'throw' = 'ok') {
 	let guardCalls = 0;
 	return {
 		async run(model: string) {
@@ -36,6 +36,7 @@ function fakeAi(onQuery: GuardScript, onOrg: GuardScript = 'safe') {
 				if (verdict === 'throw') throw new Error('guard unavailable');
 				return { response: verdict === 'unsafe' ? 'unsafe\nS1' : 'safe' };
 			}
+			if (generator === 'throw') throw new Error('model unavailable');
 			return { response: JSON.stringify(ORG) };
 		},
 	};
@@ -110,7 +111,32 @@ describe('a guard outage must not mint a permalink', () => {
 		expect(await persisted(q)).toEqual({ permalinks: 0, cached: false, count: 0 });
 	});
 
-	it('an unsafe org falls back to canned text, which is moderated by construction and does persist', async () => {
+	it('a fallback under an unmoderated query is not moderated by construction: the title is the query', async () => {
+		// The guard could not see the query, then the model failed. The canned body is
+		// fixed text, but pickFallback puts the visitor's own words in the title — and
+		// nothing has looked at those words. Without this test the permalink, its
+		// <title> and its share card would all carry an unmoderated string.
+		const q = 'A glacial fjord ferry operator';
+		const { res, body } = await post(q, fakeAi('throw', 'safe', 'throw'));
+		expect(res.status).toBe(200);
+		expect(body.mode).toBe('fallback');
+		expect((body.org as Org).title).toBe(q);
+		expect(body.moderated).toBe(false);
+		expect(body.id).toBeNull();
+		expect(await persisted(q)).toEqual({ permalinks: 0, cached: false, count: 0 });
+	});
+
+	it('a fallback under a query the guard passed does persist, as before', async () => {
+		const q = 'A sheltered bay ferry operator';
+		const { res, body } = await post(q, fakeAi('safe', 'safe', 'throw'));
+		expect(res.status).toBe(200);
+		expect(body.mode).toBe('fallback');
+		expect(body.moderated).toBe(true);
+		expect(typeof body.id).toBe('string');
+		expect(await persisted(q)).toEqual({ permalinks: 1, cached: false, count: 0 });
+	});
+
+	it('an unsafe org falls back to canned text under a passed query, which does persist', async () => {
 		const q = 'A lakeside ferry operator';
 		const { res, body } = await post(q, fakeAi('safe', 'unsafe'));
 		expect(res.status).toBe(200);

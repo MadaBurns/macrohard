@@ -239,8 +239,9 @@ export async function generateOrg(ai: AiLike, model: string, query: string): Pro
 
 // ---------------------------------------------------------------------------
 // Moderation — Llama Guard on the way in and on the way out. Anything stored
-// at a public permalink has passed both. A guard outage degrades to "unknown",
-// which the caller treats as pass: an outage should not take the toy down.
+// at a public permalink has passed both. A guard outage degrades to "unknown":
+// the caller still serves an answer (an outage should not take the toy down)
+// but persists nothing, because nothing has been looked at.
 // ---------------------------------------------------------------------------
 
 export const GUARD_MODEL = '@cf/meta/llama-guard-3-8b';
@@ -325,8 +326,9 @@ export type Proposal = { outcome: 'rejected' } | { outcome: 'proposed'; org: Org
  * what makes "nothing reaches a public permalink unmoderated" true even while
  * the guard is down.
  *
- * A canned fallback is `moderated: true` because it is fixed text in this repo,
- * not model output: there is nothing for a guard to have an opinion about.
+ * A canned fallback's body is fixed text in this repo, but its title is the
+ * visitor's query (`pickFallback`), so it is moderated exactly when the query
+ * guard actually passed it — never when the guard could not say.
  */
 export async function proposeOrg(ai: AiLike, model: string, query: string): Promise<Proposal> {
 	const queryVerdict = await moderateQuery(ai, query);
@@ -338,6 +340,6 @@ export async function proposeOrg(ai: AiLike, model: string, query: string): Prom
 		return { outcome: 'proposed', org, mode: 'ai', moderated: queryVerdict === 'safe' && orgVerdict === 'safe' };
 	} catch (err) {
 		console.error('generateOrg failed', String(err));
-		return { outcome: 'proposed', org: pickFallback(query), mode: 'fallback', moderated: true };
+		return { outcome: 'proposed', org: pickFallback(query), mode: 'fallback', moderated: queryVerdict === 'safe' };
 	}
 }
