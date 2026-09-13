@@ -2,7 +2,18 @@ import { Hono } from 'hono';
 import type { AppEnv } from './env';
 import { getReceipts, isStale, refreshReceipts, type Receipts } from './receipts';
 import { FALLBACK_ORGS, cacheKeyText, proposeOrg, validateQuery, type Org } from './staff';
-import { GUARD_OUTAGE_KEY, GUARD_OUTAGE_TTL, ID_RE, consumeDailyCap, newId, readDailyCap, sha256Hex, verifyTurnstile } from './limits';
+import {
+	GUARD_OUTAGE_KEY,
+	GUARD_OUTAGE_TTL,
+	ID_RE,
+	TURNSTILE_ACTION,
+	consumeDailyCap,
+	newId,
+	parseHostnames,
+	readDailyCap,
+	sha256Hex,
+	verifyTurnstile,
+} from './limits';
 import { ogCardHtml, renderOgPng, shareDescription, shareText, shareTitle } from './og';
 
 type Bindings = AppEnv;
@@ -119,6 +130,7 @@ app.get('/api/config', (c) =>
 	c.json(
 		{
 			turnstileSiteKey: c.env.TURNSTILE_SITE_KEY || null,
+			turnstileAction: TURNSTILE_ACTION,
 			contactEmail: c.env.CONTACT_EMAIL,
 			dailyCap: Number(c.env.STAFF_DAILY_CAP) || 0,
 			repos: repoList(c.env).map((r) => `https://github.com/${c.env.GITHUB_OWNER}/${r}`),
@@ -185,9 +197,14 @@ app.post('/api/staff', async (c) => {
 
 	if (c.env.TURNSTILE_SECRET) {
 		const token = typeof payload.turnstile === 'string' ? payload.turnstile : '';
-		if (!token || !(await verifyTurnstile(c.env.TURNSTILE_SECRET, token, ip))) {
-			return c.json({ error: 'Please complete the check.' }, 403);
-		}
+		const ok = await verifyTurnstile({
+			secret: c.env.TURNSTILE_SECRET,
+			token,
+			ip,
+			action: TURNSTILE_ACTION,
+			hostnames: parseHostnames(c.env.TURNSTILE_HOSTNAMES),
+		});
+		if (!ok) return c.json({ error: 'Please complete the check.' }, 403);
 	}
 
 	// The binding is absent under the test pool's older wrangler; the daily cap still holds there.

@@ -33,8 +33,13 @@ Nothing is inferred from author names. See `parseAgentTrailers` in
 2. Per-IP rate limit (6/min) via a Workers rate-limit binding.
 3. Global daily cap (`STAFF_DAILY_CAP`, default 400). Past it, a canned org is
    served and labelled as such. Set it to `0` to switch the model off entirely.
-4. Optional Turnstile: set `TURNSTILE_SITE_KEY` (var) and `TURNSTILE_SECRET`
-   (secret) and the form starts requiring a token.
+4. Turnstile. `TURNSTILE_SITE_KEY` is set (it is public — it ships in the
+   page), so the gate turns on the moment `TURNSTILE_SECRET` is put in place
+   and stays inert until then. A token is accepted only when siteverify
+   reports `success`, an `action` of `staff`, and a minting host listed in
+   `TURNSTILE_HOSTNAMES` — which excludes localhost, so a token minted on a
+   dev box is refused in production. Unlike the other bounds here this one
+   fails closed: a siteverify that cannot be completed is a refusal.
 5. Llama Guard 3 on the query before generation (unsafe → 400, nothing
    stored) and on the generated org after it (unsafe → canned fallback).
    When the daily cap is spent, the visitor's text is not stored at all.
@@ -48,7 +53,10 @@ Nothing is inferred from author names. See `parseAgentTrailers` in
 - `GITHUB_TOKEN` — a read-only fine-grained token lifts the anonymous 60/hr
   ceiling on the receipts refresh. Not required; the cron is sized to fit
   without it and stale-serves on failure.
-- `TURNSTILE_SECRET` — see above.
+- `TURNSTILE_SECRET` — the widget's secret key, from the Turnstile dashboard.
+  Set it with `wrangler secret put TURNSTILE_SECRET` (operator-run; pipe it on
+  stdin rather than passing it as an argument). Until it is set, the gate is
+  inert and the rest of the spend controls carry the load.
 
 ## Running it
 

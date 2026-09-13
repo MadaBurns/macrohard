@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { env } from 'cloudflare:test';
-import { ID_RE, consumeDailyCap, dayKey, newId, sha256Hex, verifyTurnstile } from '../src/limits';
+import { ID_RE, consumeDailyCap, dayKey, newId, parseHostnames, sha256Hex, verifyTurnstile } from '../src/limits';
 
 describe('daily cap', () => {
 	it('keys by UTC day', () => {
@@ -39,16 +39,64 @@ describe('ids and hashing', () => {
 });
 
 describe('verifyTurnstile', () => {
-	it('posts the secret and token and trusts only success:true', async () => {
+	const base = { secret: 'sec', token: 'tok', ip: '1.2.3.4', action: 'staff', hostnames: ['macrohard.nz'] };
+	const reply =
+		(payload: unknown, status = 200) =>
+		async () =>
+			new Response(JSON.stringify(payload), { status });
+	const pass = { success: true, action: 'staff', hostname: 'macrohard.nz' };
+
+	it('posts the secret, token and ip, and accepts a well-formed pass', async () => {
 		let body = '';
-		const ok = await verifyTurnstile('sec', 'tok', '1.2.3.4', async (_u, init) => {
+		const ok = await verifyTurnstile(base, async (_u, init) => {
 			body = String(init?.body);
-			return new Response(JSON.stringify({ success: true }));
+			return new Response(JSON.stringify(pass));
 		});
 		expect(ok).toBe(true);
 		expect(body).toContain('secret=sec');
 		expect(body).toContain('remoteip=1.2.3.4');
-		expect(await verifyTurnstile('sec', 'tok', null, async () => new Response(JSON.stringify({ success: false })))).toBe(false);
-		expect(await verifyTurnstile('sec', 'tok', null, async () => new Response('x', { status: 500 }))).toBe(false);
+	});
+
+	it('refuses when Cloudflare says so, or cannot be asked', async () => {
+		expect(await verifyTurnstile(base, reply({ ...pass, success: false }))).toBe(false);
+		expect(await verifyTurnstile(base, reply('x', 500))).toBe(false);
+		expect(
+			await verifyTurnstile(base, async () => {
+				throw new Error('network');
+			}),
+		).toBe(false);
+	});
+
+	it('refuses a token minted for another action', async () => {
+		expect(await verifyTurnstile(base, reply({ ...pass, action: 'contact' }))).toBe(false);
+		expect(await verifyTurnstile(base, reply({ success: true, hostname: 'macrohard.nz' }))).toBe(false);
+	});
+
+	it('refuses a token minted on a host we do not serve', async () => {
+		expect(await verifyTurnstile(base, reply({ ...pass, hostname: 'localhost' }))).toBe(false);
+		expect(await verifyTurnstile(base, reply({ success: true, action: 'staff' }))).toBe(false);
+	});
+
+	it('fails closed when no hostname is configured', async () => {
+		expect(await verifyTurnstile({ ...base, hostnames: [] }, reply(pass))).toBe(false);
+	});
+
+	it('rejects a missing or oversized token without calling out', async () => {
+		let called = false;
+		const spy = async () => {
+			called = true;
+			return new Response(JSON.stringify(pass));
+		};
+		expect(await verifyTurnstile({ ...base, token: '' }, spy)).toBe(false);
+		expect(await verifyTurnstile({ ...base, token: 'x'.repeat(2049) }, spy)).toBe(false);
+		expect(called).toBe(false);
+	});
+});
+
+describe('parseHostnames', () => {
+	it('splits, trims and drops blanks', () => {
+		expect(parseHostnames('a.example, b.example ,')).toEqual(['a.example', 'b.example']);
+		expect(parseHostnames(undefined)).toEqual([]);
+		expect(parseHostnames('')).toEqual([]);
 	});
 });

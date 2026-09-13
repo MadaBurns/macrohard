@@ -23,6 +23,10 @@ describe('/api/config', () => {
 		expect(body.contactEmail).toBe('hello@macrohard.nz');
 		expect(body.repos).toEqual(expect.arrayContaining([expect.stringContaining('github.com/')]));
 		expect(JSON.stringify(body)).not.toMatch(/secret|token/i);
+		// The sitekey is public by design; the action must reach the client from
+		// here, because the server refuses any token minted for a different one.
+		expect(body.turnstileSiteKey).toBe('0x4AAAAAAEzA4MBJpyLc1wCT');
+		expect(body.turnstileAction).toBe('staff');
 	});
 });
 
